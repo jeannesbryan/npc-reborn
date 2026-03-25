@@ -3,6 +3,11 @@ session_start();
 // Pastikan zona waktu sudah di set ke Jakarta
 date_default_timezone_set('Asia/Jakarta');
 
+// [BARU] Buat CSRF Token jika belum ada di sesi ini
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // 1. Konfigurasi Sistem
 $db_file = __DIR__ . '/echo_data.sqlite';
 $upload_dir = __DIR__ . '/uploads/';
@@ -48,6 +53,11 @@ function parse_echo_embeds($text) {
 
 // 4. Proses Hapus Postingan
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_post' && $is_admin) {
+    // [BARU] Validasi CSRF Token
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("Transmisi ditolak: Validasi integritas CSRF gagal.");
+    }
+
     $post_id = (int)$_POST['post_id'];
     
     $stmt = $pdo->prepare("SELECT file_name FROM post_media WHERE post_id = ?");
@@ -62,8 +72,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// 5. Proses Tambah Postingan (MODIFIKASI ZONA WAKTU DI SINI)
+// 5. Proses Tambah Postingan
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_post' && $is_admin) {
+    // [BARU] Validasi CSRF Token
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("Transmisi ditolak: Validasi integritas CSRF gagal.");
+    }
+
     $content = trim($_POST['content'] ?? '');
     $files = $_FILES['media'] ?? null;
     $total_files = !empty($files['name'][0]) ? count($files['name']) : 0;
@@ -73,11 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 
     if ($content !== '' || $total_files > 0) {
-        // PERBAIKAN: Suntikkan waktu saat ini dari PHP (Asia/Jakarta) ke dalam kolom created_at
         $stmt = $pdo->prepare("INSERT INTO posts (content, created_at) VALUES (:content, :created_at)");
         $stmt->execute([
             ':content' => htmlspecialchars($content),
-            ':created_at' => date('Y-m-d H:i:s') // Diambil sesuai zona waktu PHP
+            ':created_at' => date('Y-m-d H:i:s') 
         ]); 
         
         $post_id = $pdo->lastInsertId();
@@ -137,6 +151,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                     <form method="POST" onsubmit="return confirm('Hapus jejak gema ini secara permanen?');" style="margin:0;">
                         <input type="hidden" name="action" value="delete_post">
                         <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <button type="submit" class="btn-danger-text" title="Delete Post">&times;</button>
                     </form>
                     <?php endif; ?>
@@ -197,6 +212,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         <?php if ($is_admin): ?>
         <form method="POST" enctype="multipart/form-data" class="mb-4">
             <input type="hidden" name="action" value="add_post">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            
             <div class="form-group">
                 <label class="form-label">Apa yang anda pikirkan?</label>
                 <textarea class="form-control" name="content" placeholder="Leave a comment here"></textarea>
@@ -247,7 +264,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                         document.getElementById('load-more-container').classList.add('d-none');
                         endIndicator.classList.remove('d-none');
                     } else {
-                        // Parsing data untuk menghitung jumlah '.card' (postingan) yang masuk
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = data;
                         const postCount = tempDiv.querySelectorAll('.card').length;
@@ -257,7 +273,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                         btnLoadMore.innerHTML = originalText;
                         btnLoadMore.disabled = false;
 
-                        // Jika jumlah post kurang dari 10, sembunyikan tombol load more
                         if (postCount < 10) {
                             document.getElementById('load-more-container').classList.add('d-none');
                             endIndicator.classList.remove('d-none');
