@@ -1,0 +1,5 @@
+# Melindungi file database Bunker dari akses langsung
+<FilesMatch "\.(sqlite|db)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
