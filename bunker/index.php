@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Jakarta');
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header("Location: dashboard.php");
@@ -12,6 +13,22 @@ $error_message = '';
 if (!isset($_SESSION['login_attempts'])) $_SESSION['login_attempts'] = 0;
 if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+try {
+    $pdo = new PDO("sqlite:" . $db_file);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Auto-create tabel access_logs jika belum ada
+    $pdo->exec("CREATE TABLE IF NOT EXISTS access_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT,
+        user_agent TEXT,
+        status TEXT,
+        created_at DATETIME
+    )");
+} catch (PDOException $e) {
+    die("Sistem internal mengalami kegagalan.");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_SESSION['login_attempts'] >= 5) {
         $error_message = "Sistem terkunci sementara. Terlalu banyak anomali terdeteksi.";
@@ -21,29 +38,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
+            
+            // Catat data pengunjung
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+            $now = date('Y-m-d H:i:s');
 
-            try {
-                $pdo = new PDO("sqlite:" . $db_file);
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $stmt = $pdo->prepare("SELECT id, password_hash FROM users WHERE email = :email LIMIT 1");
+            $stmt->execute([':email' => $email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt = $pdo->prepare("SELECT id, password_hash FROM users WHERE email = :email LIMIT 1");
-                $stmt->execute([':email' => $email]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($user && password_verify($password, $user['password_hash'])) {
+                session_regenerate_id(true); 
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['logged_in'] = true;
+                $_SESSION['login_attempts'] = 0; 
 
-                if ($user && password_verify($password, $user['password_hash'])) {
-                    session_regenerate_id(true); 
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['logged_in'] = true;
-                    $_SESSION['login_attempts'] = 0; 
+                // Insert Success Log
+                $stmtLog = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, 'SUCCESS', ?)");
+                $stmtLog->execute([$ip, $ua, $now]);
 
-                    header("Location: dashboard.php");
-                    exit;
-                } else {
-                    $_SESSION['login_attempts']++;
-                    $error_message = "Akses Ditolak: Entitas tidak dikenali.";
-                }
-            } catch (PDOException $e) {
-                $error_message = "Sistem internal mengalami kegagalan.";
+                // Auto-Cleanup Log (Maksimal 500 data)
+                $pdo->exec("DELETE FROM access_logs WHERE id NOT IN (SELECT id FROM access_logs ORDER BY id DESC LIMIT 500)");
+
+                header("Location: dashboard.php");
+                exit;
+            } else {
+                $_SESSION['login_attempts']++;
+                $error_message = "Akses Ditolak: Entitas tidak dikenali.";
+                
+                // Insert Failed Log
+                $stmtLog = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, 'FAILED', ?)");
+                $stmtLog->execute([$ip, $ua, $now]);
+
+                // Auto-Cleanup Log (Maksimal 500 data)
+                $pdo->exec("DELETE FROM access_logs WHERE id NOT IN (SELECT id FROM access_logs ORDER BY id DESC LIMIT 500)");
             }
         }
     }
@@ -96,56 +125,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // 1. Mendaftarkan Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('Bunker SW terdaftar dengan sukses:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Pendaftaran Bunker SW gagal:', error);
-                    });
+                    .catch(error => console.log('SW fail:', error));
             });
         }
-
-        // 2. Menangani Prompt Instalasi
         let deferredPrompt;
         const installContainer = document.getElementById('pwa-install-container');
         const installBtn = document.getElementById('btn-install-pwa');
-
-        // Event ini hanya ditembak oleh browser jika kriteria PWA terpenuhi (HTTPS/Localhost)
+        
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Mencegah browser menampilkan prompt default secara otomatis
-            e.preventDefault();
-            // Simpan event agar bisa dipicu nanti dari tombol khusus kita
-            deferredPrompt = e;
-            // Munculkan tombol instalasi khusus di halaman login
+            e.preventDefault(); 
+            deferredPrompt = e; 
             installContainer.classList.remove('d-none');
         });
-
-        // Aksi ketika tombol instal diklik
+        
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt !== null) {
-                // Tampilkan prompt instalasi bawaan browser
                 deferredPrompt.prompt();
-                // Tunggu respons pengguna (apakah menerima atau menolak)
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('Sistem diinstal');
-                }
-                // Hapus referensi ke prompt karena hanya bisa digunakan sekali
-                deferredPrompt = null;
-                // Sembunyikan kembali area tombol instal
+                deferredPrompt = null; 
                 installContainer.classList.add('d-none');
             }
         });
-
-        // Deteksi jika pengguna sukses melakukan instalasi
+        
         window.addEventListener('appinstalled', () => {
-            installContainer.classList.add('d-none');
+            installContainer.classList.add('d-none'); 
             deferredPrompt = null;
-            console.log('PWA berhasil ditambahkan ke perangkat');
         });
     </script>
 </body>

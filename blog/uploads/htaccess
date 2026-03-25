@@ -1,0 +1,15 @@
+# Mencegah akses langsung ke database
+<FilesMatch "\.(sqlite|db)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+Options -Indexes
+
+# Mengaktifkan URL Rewrite untuk artikel blog
+RewriteEngine On
+# Jika yang diakses bukan file asli dan bukan direktori
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# Arahkan ke view.php dengan parameter slug
+RewriteRule ^([^/]+)/?$ view.php?slug=$1 [L,QSA]

@@ -53,7 +53,6 @@ function parse_echo_embeds($text) {
 
 // 4. Proses Hapus Postingan
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_post' && $is_admin) {
-    // [BARU] Validasi CSRF Token
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         die("Transmisi ditolak: Validasi integritas CSRF gagal.");
     }
@@ -74,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // 5. Proses Tambah Postingan
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_post' && $is_admin) {
-    // [BARU] Validasi CSRF Token
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         die("Transmisi ditolak: Validasi integritas CSRF gagal.");
     }

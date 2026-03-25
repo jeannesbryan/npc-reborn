@@ -1,4 +1,6 @@
 /* assets/style.css */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
 :root {
     --bg-dark: #121212;
     --bg-card: #1e1e1e;
@@ -8,14 +10,31 @@
     --accent: #ffffff;
     --danger: #ff6b6b;
     --danger-bg: #2b0f0f;
+    --success: #2ea043;
 }
 
 * {
     box-sizing: border-box;
 }
 
+/* --- Custom Scrollbar --- */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
 body {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
     background-color: var(--bg-dark);
     color: var(--text-main);
     margin: 0;
@@ -51,6 +70,8 @@ h1, h2, h3, h4 { margin-top: 0; font-weight: bold; }
 a { color: #5bc0de; text-decoration: none; }
 a:hover { text-decoration: underline; }
 .text-muted { color: var(--text-muted); font-size: 0.85rem; }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
 .fs-small { font-size: 0.8rem; }
 .fw-bold { font-weight: bold; }
 .d-none { display: none !important; }
@@ -107,6 +128,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .btn-outline-danger { background-color: transparent; color: var(--danger); border-color: var(--danger); }
 .btn-outline-danger:hover { background-color: var(--danger); color: #fff; }
 .btn-danger-text { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 5px; }
+
+/* --- Table --- */
+.table-responsive { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+th { color: var(--text-muted); font-weight: normal; }
 
 /* --- Alert --- */
 .alert-bunker {
