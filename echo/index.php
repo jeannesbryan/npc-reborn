@@ -1,5 +1,6 @@
 <?php
 session_start();
+// Pastikan zona waktu sudah di set ke Jakarta
 date_default_timezone_set('Asia/Jakarta');
 
 // 1. Konfigurasi Sistem
@@ -27,19 +28,19 @@ function parse_echo_embeds($text) {
     // A. Embed YouTube
     $text = preg_replace(
         '~(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\S+)?~i',
-        '<div class="ratio ratio-16x9 mt-2 mb-2"><iframe src="https://www.youtube.com/embed/$1" allowfullscreen class="rounded border border-secondary"></iframe></div>',
+        '<div class="ratio mt-2 mb-2"><iframe src="https://www.youtube.com/embed/$1" allowfullscreen></iframe></div>',
         $text
     );
-    // B. Embed Direct Image (Dengan fitur ZOOM otomatis)
+    // B. Embed Direct Image
     $text = preg_replace(
         '~(?<!src=")(https?://[^\s]+(?:\.jpg|\.jpeg|\.png|\.gif|\.webp))~i',
-        '<img src="$1" class="echo-media-single border border-secondary mt-2 mb-2 zoomable-image" title="Klik untuk memperbesar" alt="External Image">',
+        '<img src="$1" class="echo-media-single mt-2 mb-2 zoomable-image" title="Klik untuk memperbesar" alt="External Image">',
         $text
     );
     // C. Regular Links
     $text = preg_replace(
         '~(?<!src="|")\b(https?://[^\s<]+)\b~i',
-        '<a href="$1" target="_blank" class="text-info text-decoration-none">$1</a>',
+        '<a href="$1" target="_blank">$1</a>',
         $text
     );
     return $text;
@@ -61,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// 5. Proses Tambah Postingan
+// 5. Proses Tambah Postingan (MODIFIKASI ZONA WAKTU DI SINI)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_post' && $is_admin) {
     $content = trim($_POST['content'] ?? '');
     $files = $_FILES['media'] ?? null;
@@ -72,24 +73,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 
     if ($content !== '' || $total_files > 0) {
-        $stmt = $pdo->prepare("INSERT INTO posts (content) VALUES (:content)");
-        $stmt->execute([':content' => htmlspecialchars($content)]); 
+        // PERBAIKAN: Suntikkan waktu saat ini dari PHP (Asia/Jakarta) ke dalam kolom created_at
+        $stmt = $pdo->prepare("INSERT INTO posts (content, created_at) VALUES (:content, :created_at)");
+        $stmt->execute([
+            ':content' => htmlspecialchars($content),
+            ':created_at' => date('Y-m-d H:i:s') // Diambil sesuai zona waktu PHP
+        ]); 
+        
         $post_id = $pdo->lastInsertId();
 
         if ($total_files > 0) {
             $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'ogg'];
             
             for ($i = 0; $i < $total_files; $i++) {
-                $tmp_name = $files['tmp_name'][$i];
-                $name = $files['name'][$i];
-                $error = $files['error'][$i];
-                $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-
-                if ($error === 0 && in_array($ext, $allowed_ext)) {
+                $ext = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
+                if ($files['error'][$i] === 0 && in_array($ext, $allowed_ext)) {
                     $new_filename = uniqid('echo_') . '_' . time() . '.' . $ext;
-                    if (move_uploaded_file($tmp_name, $upload_dir . $new_filename)) {
-                        $stmt_media = $pdo->prepare("INSERT INTO post_media (post_id, file_name) VALUES (?, ?)");
-                        $stmt_media->execute([$post_id, $new_filename]);
+                    if (move_uploaded_file($files['tmp_name'][$i], $upload_dir . $new_filename)) {
+                        $pdo->prepare("INSERT INTO post_media (post_id, file_name) VALUES (?, ?)")->execute([$post_id, $new_filename]);
                     }
                 }
             }
@@ -120,65 +121,53 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         $media_stmt->execute([$post['id']]);
         $medias = $media_stmt->fetchAll(PDO::FETCH_ASSOC);
         ?>
-        <div class="card mb-3 border-secondary bg-dark">
-            <ul class="list-group list-group-flush text-bg-dark">
-                <li class="list-group-item bg-dark text-light border-secondary">
-                    
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="d-flex">
-                            <div class="p-2 ps-0">
-                                <img src="../assets/jeannesbryan.webp" class="rounded-circle bg-secondary" width="50px" height="50px" alt="Avatar" style="object-fit:cover;">
-                            </div>
-                            <div class="p-2 lh-sm">
-                                <div class="fw-bold text-light" style="font-size: 0.95rem;">
-                                    Jeannes Bryan <span class="text-secondary fw-normal" style="font-size: 0.85rem;">&#x25CF; @jeannesbryan</span>
-                                </div>
-                                <div class="text-secondary mt-1" style="font-size: 0.75rem;">
-                                    <?= format_indo_date($post['created_at']) ?>
-                                </div>
-                            </div>
+        <div class="card mb-3">
+            <div class="p-3">
+                
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex gap-2 align-items-center">
+                        <img src="../assets/jeannesbryan.webp" class="avatar" width="45" height="45" alt="Avatar">
+                        <div>
+                            <div class="fw-bold">Jeannes Bryan <span class="text-muted fw-normal fs-small">&#x25CF; @jeannesbryan</span></div>
+                            <div class="text-muted fs-small"><?= format_indo_date($post['created_at']) ?></div>
                         </div>
-                        
-                        <?php if ($is_admin): ?>
-                        <form method="POST" onsubmit="return confirm('Hapus jejak gema ini secara permanen?');" class="p-2 pe-0 m-0">
-                            <input type="hidden" name="action" value="delete_post">
-                            <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                            <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Delete Post">&times;</button>
-                        </form>
-                        <?php endif; ?>
                     </div>
+                    
+                    <?php if ($is_admin): ?>
+                    <form method="POST" onsubmit="return confirm('Hapus jejak gema ini secara permanen?');" style="margin:0;">
+                        <input type="hidden" name="action" value="delete_post">
+                        <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                        <button type="submit" class="btn-danger-text" title="Delete Post">&times;</button>
+                    </form>
+                    <?php endif; ?>
+                </div>
 
-                    <div class="p-2 pt-1 ps-0">
-                        <?php if (!empty($post['content'])): ?>
-                            <div class="mb-2"><?= parse_echo_embeds(nl2br($post['content'])) ?></div>
-                        <?php endif; ?>
+                <?php if (!empty($post['content'])): ?>
+                    <div class="mb-2"><?= parse_echo_embeds(nl2br($post['content'])) ?></div>
+                <?php endif; ?>
 
-                        <?php if (count($medias) > 0): ?>
-                            <div class="row g-2 mt-2">
-                                <?php 
-                                $col_class = count($medias) == 1 ? 'col-12' : 'col-6';
-                                $media_class = count($medias) == 1 ? 'echo-media-single' : 'echo-media';
-                                ?>
-                                
-                                <?php foreach ($medias as $media): 
-                                    $file_ext = strtolower(pathinfo($media['file_name'], PATHINFO_EXTENSION));
-                                ?>
-                                    <div class="<?= $col_class ?>">
-                                        <?php if (in_array($file_ext, $video_extensions)): ?>
-                                            <video controls class="<?= $media_class ?> border border-secondary">
-                                                <source src="uploads/<?= $media['file_name'] ?>" type="video/<?= $file_ext === 'mkv' ? 'webm' : $file_ext ?>">
-                                            </video>
-                                        <?php else: ?>
-                                            <img src="uploads/<?= $media['file_name'] ?>" class="<?= $media_class ?> border border-secondary zoomable-image" title="Klik untuk memperbesar" alt="Attached Echo">
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
+                <?php if (count($medias) > 0): ?>
+                    <div class="echo-media-grid mt-2">
+                        <?php 
+                        $is_single = count($medias) == 1;
+                        foreach ($medias as $media): 
+                            $file_ext = strtolower(pathinfo($media['file_name'], PATHINFO_EXTENSION));
+                            $item_class = $is_single ? 'media-item full-width' : 'media-item';
+                            $img_class = $is_single ? 'echo-media-single zoomable-image' : 'echo-media zoomable-image';
+                        ?>
+                            <div class="<?= $item_class ?>">
+                                <?php if (in_array($file_ext, $video_extensions)): ?>
+                                    <video controls class="<?= $is_single ? 'echo-media-single' : 'echo-media' ?>">
+                                        <source src="uploads/<?= $media['file_name'] ?>" type="video/<?= $file_ext === 'mkv' ? 'webm' : $file_ext ?>">
+                                    </video>
+                                <?php else: ?>
+                                    <img src="uploads/<?= $media['file_name'] ?>" class="<?= $img_class ?>" title="Klik untuk memperbesar" alt="Attached Echo">
+                                <?php endif; ?>
                             </div>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
-
-                </li>
-            </ul>
+                <?php endif; ?>
+            </div>
         </div>
         <?php
     }
@@ -188,137 +177,93 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>echo - Jeannes Bryan | NPC</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-        <style>
-            .echo-media {
-                width: 100%;
-                height: 250px;
-                object-fit: cover;
-                background-color: #000;
-                border-radius: 0.375rem;
-            }
-            .echo-media-single {
-                width: 100%;
-                max-height: 400px;
-                object-fit: contain;
-                background-color: #000;
-                border-radius: 0.375rem;
-            }
-            /* CSS Khusus untuk Interaksi Zoom */
-            .zoomable-image {
-                cursor: zoom-in;
-                transition: opacity 0.2s ease-in-out;
-            }
-            .zoomable-image:hover {
-                opacity: 0.8;
-            }
-            /* Menyempurnakan Tampilan Modal Lightbox */
-            #imageZoomModal .modal-content {
-                background-color: transparent;
-                border: none;
-            }
-            #imageZoomModal .modal-header {
-                border-bottom: none;
-                padding: 1rem 1rem 0;
-            }
-            #modalImage {
-                width: 100%;
-                max-height: 85vh;
-                object-fit: contain;
-                border-radius: 0.375rem;
-            }
-        </style>
-    </head>
-    <body class="container font-monospace" data-bs-theme="dark">
-        <div class="row">
-            <div class="col-sm-2"></div>
-            <div class="col-sm-8">
-                
-                <div class="my-3 text-bg-dark border-bottom border-light text-center pb-2">
-                    <figure class="text-center mb-0">
-                        <blockquote class="blockquote">
-                            <h1 class="display-6 fw-bold">echo</h1>
-                        </blockquote>
-                        <figcaption class="blockquote-footer mt-1">
-                            Thoughts transmitted into the void
-                        </figcaption>
-                    </figure>
-                </div>
-
-                <?php if ($is_admin): ?>
-                <form method="POST" enctype="multipart/form-data" class="mb-4">
-                    <input type="hidden" name="action" value="add_post">
-                    <div class="mb-3">
-                        <div class="form-floating">
-                            <textarea class="form-control bg-dark text-light border-secondary" name="content" placeholder="Leave a comment here" id="floatingTextarea2" style="height: 100px"></textarea>
-                            <label for="floatingTextarea2" class="text-secondary">Apa yang anda pikirkan?</label>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <input class="form-control bg-dark border-secondary text-secondary" type="file" name="media[]" id="formFileMultiple" multiple accept="image/*, video/*">
-                        <small class="text-secondary">Maksimal 4 file (Gambar atau Video).</small>
-                    </div>
-                    <div class="d-flex justify-content-end mb-3">
-                        <button type="submit" class="btn btn-sm btn-light">Transmit</button>
-                    </div>
-                </form>
-                <hr class="border-secondary mb-4">
-                <?php endif; ?>
-
-                <div id="echo-container"></div>
-
-                <div class="d-grid mt-2 mb-4" id="load-more-container">
-                    <button class="btn btn-sm btn-dark border-secondary" type="button" id="btn-load-more" onclick="loadPosts()">- Load More -</button>
-                </div>
-                
-                <div class="small text-center mt-3 text-secondary d-none mb-5" id="end-indicator">- Void has completely echoed -</div>
-
-            </div>
-            <div class="col-sm-2"></div>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>echo - Jeannes Bryan | NPC</title>
+    <meta name="theme-color" content="#121212">    
+    <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
+    <link rel="apple-touch-icon" href="../assets/npc-icon.svg">
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+    <div class="container">
+        
+        <div class="text-center border-bottom pb-2 mb-4">
+            <h1 class="mb-0">echo</h1>
+            <div class="text-muted mt-1">Thoughts transmitted into the void</div>
         </div>
 
-        <div class="modal fade" id="imageZoomModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center p-0">
-                        <img id="modalImage" src="" alt="Zoomed Echo">
-                    </div>
-                </div>
+        <?php if ($is_admin): ?>
+        <form method="POST" enctype="multipart/form-data" class="mb-4">
+            <input type="hidden" name="action" value="add_post">
+            <div class="form-group">
+                <label class="form-label">Apa yang anda pikirkan?</label>
+                <textarea class="form-control" name="content" placeholder="Leave a comment here"></textarea>
             </div>
-        </div>
+            <div class="form-group">
+                <input class="form-control text-muted" type="file" name="media[]" multiple accept="image/*, video/*">
+                <div class="text-muted fs-small mt-1">Maksimal 4 file (Gambar atau Video).</div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-light">Transmit</button>
+            </div>
+        </form>
+        <hr>
+        <?php endif; ?>
 
-     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-     
-     <script>
+        <div id="echo-container"></div>
+
+        <div class="mb-4 text-center d-none" id="load-more-container">
+            <button class="btn btn-dark btn-block" type="button" id="btn-load-more" onclick="loadPosts()">- Load More -</button>
+        </div>
+        
+        <div class="text-center mt-3 text-muted d-none mb-5" id="end-indicator">- Void has completely echoed -</div>
+
+    </div>
+
+    <div id="imageZoomModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close-modal" id="closeModalBtn">&times;</button>
+            <img id="modalImage" src="" alt="Zoomed Echo">
+        </div>
+    </div>
+
+    <script>
         let currentOffset = 0;
         const container = document.getElementById('echo-container');
         const btnLoadMore = document.getElementById('btn-load-more');
         const endIndicator = document.getElementById('end-indicator');
 
-        // Logika Load Data AJAX
         function loadPosts() {
             const originalText = btnLoadMore.innerHTML;
             btnLoadMore.innerHTML = 'Receiving...';
             btnLoadMore.disabled = true;
 
             fetch(`index.php?ajax=1&offset=${currentOffset}`)
-                .then(response => response.text())
+                .then(res => res.text())
                 .then(data => {
                     if (data.trim() === "END") {
                         document.getElementById('load-more-container').classList.add('d-none');
                         endIndicator.classList.remove('d-none');
                     } else {
+                        // Parsing data untuk menghitung jumlah '.card' (postingan) yang masuk
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = data;
+                        const postCount = tempDiv.querySelectorAll('.card').length;
+
                         container.insertAdjacentHTML('beforeend', data);
                         currentOffset += 10; 
                         btnLoadMore.innerHTML = originalText;
                         btnLoadMore.disabled = false;
+
+                        // Jika jumlah post kurang dari 10, sembunyikan tombol load more
+                        if (postCount < 10) {
+                            document.getElementById('load-more-container').classList.add('d-none');
+                            endIndicator.classList.remove('d-none');
+                        } else {
+                            document.getElementById('load-more-container').classList.remove('d-none');
+                        }
                     }
                 })
                 .catch(error => {
@@ -327,25 +272,25 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                     btnLoadMore.disabled = false;
                 });
         }
-
+        
         document.addEventListener('DOMContentLoaded', loadPosts);
 
-        // LOGIKA EVENT DELEGATION UNTUK ZOOM GAMBAR
-        // Kita pakai document.addEventListener karena gambar dimuat secara AJAX setelah halaman selesai me-load.
+        // Vanilla JS Modal Logic
+        const modal = document.getElementById('imageZoomModal');
+        const modalImg = document.getElementById('modalImage');
+        const closeBtn = document.getElementById('closeModalBtn');
+
         document.addEventListener('click', function(e) {
-            // Cek apakah elemen yang diklik memiliki class 'zoomable-image'
             if (e.target && e.target.classList.contains('zoomable-image')) {
-                // Ambil URL gambar yang diklik
-                const imgSrc = e.target.getAttribute('src');
-                
-                // Masukkan URL tersebut ke dalam tag <img> yang ada di dalam Modal
-                document.getElementById('modalImage').setAttribute('src', imgSrc);
-                
-                // Panggil dan tampilkan Bootstrap Modal
-                const myModal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
-                myModal.show();
+                modalImg.src = e.target.getAttribute('src');
+                modal.classList.add('active');
             }
         });
-     </script>
-    </body>
+
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+    </script>
+</body>
 </html>
