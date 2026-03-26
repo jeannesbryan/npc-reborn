@@ -8,72 +8,51 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 }
 
 $db_file = __DIR__ . '/bunker_data.sqlite';
-$error_message = ''; 
-
-if (!isset($_SESSION['login_attempts'])) $_SESSION['login_attempts'] = 0;
-if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+$error_msg = '';
 
 try {
     $pdo = new PDO("sqlite:" . $db_file);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // Auto-create tabel access_logs jika belum ada
-    $pdo->exec("CREATE TABLE IF NOT EXISTS access_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ip_address TEXT,
-        user_agent TEXT,
-        status TEXT,
-        created_at DATETIME
-    )");
 } catch (PDOException $e) {
-    die("Sistem internal mengalami kegagalan.");
+    die("SYS_HALT: Main database connection lost.");
+}
+
+function get_ip() {
+    return $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+}
+
+function log_access($pdo, $ip, $ua, $status) {
+    $stmt = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status) VALUES (?, ?, ?)");
+    $stmt->execute([$ip, $ua, $status]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($_SESSION['login_attempts'] >= 5) {
-        $error_message = "Sistem terkunci sementara. Terlalu banyak anomali terdeteksi.";
+    $ip = get_ip();
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= datetime('now', '-15 minutes', 'localtime')");
+    $stmt->execute([$ip]);
+    $failed_attempts = $stmt->fetchColumn();
+
+    if ($failed_attempts >= 5) {
+        $error_msg = "PROTOCOL LOCKDOWN: Too many anomalies. Signal temporarily blocked.";
     } else {
-        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            $error_message = "Validasi integritas gagal (CSRF Mismatch).";
+        $email = $_POST['operator_id'] ?? '';
+        $password = $_POST['cipher'] ?? '';
+
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['logged_in'] = true;
+            $_SESSION['user_id'] = $user['id'];
+            log_access($pdo, $ip, $ua, 'SUCCESS');
+            header("Location: dashboard.php");
+            exit;
         } else {
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            
-            // Catat data pengunjung
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-            $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
-            $now = date('Y-m-d H:i:s');
-
-            $stmt = $pdo->prepare("SELECT id, password_hash FROM users WHERE email = :email LIMIT 1");
-            $stmt->execute([':email' => $email]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($user && password_verify($password, $user['password_hash'])) {
-                session_regenerate_id(true); 
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['logged_in'] = true;
-                $_SESSION['login_attempts'] = 0; 
-
-                // Insert Success Log
-                $stmtLog = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, 'SUCCESS', ?)");
-                $stmtLog->execute([$ip, $ua, $now]);
-
-                // Auto-Cleanup Log (Maksimal 500 data)
-                $pdo->exec("DELETE FROM access_logs WHERE id NOT IN (SELECT id FROM access_logs ORDER BY id DESC LIMIT 500)");
-
-                header("Location: dashboard.php");
-                exit;
-            } else {
-                $_SESSION['login_attempts']++;
-                $error_message = "Akses Ditolak: Entitas tidak dikenali.";
-                
-                // Insert Failed Log
-                $stmtLog = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, 'FAILED', ?)");
-                $stmtLog->execute([$ip, $ua, $now]);
-
-                // Auto-Cleanup Log (Maksimal 500 data)
-                $pdo->exec("DELETE FROM access_logs WHERE id NOT IN (SELECT id FROM access_logs ORDER BY id DESC LIMIT 500)");
-            }
+            log_access($pdo, $ip, $ua, 'FAILED');
+            $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
         }
     }
 }
@@ -83,77 +62,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bunker - Jeannes Bryan | NPC</title>    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+    <title>TERMINAL LOGIN - Bunker</title>
+    <meta name="theme-color" content="#0a0a0a">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
-    <link rel="apple-touch-icon" href="../assets/npc-icon.svg">
     <link rel="stylesheet" href="../assets/style.css">
+    <style>
+        body { background-color: #050505; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px; }
+        .terminal-box { background: #0a0a0a; border: 1px solid var(--border-color); padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.8); position: relative; }
+        .terminal-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--text-muted); }
+        .terminal-header { text-align: center; margin-bottom: 30px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; }
+        .terminal-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
+        .terminal-input { background: transparent; border: none; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: 'JetBrains Mono', monospace; width: 100%; padding: 8px 0; margin-bottom: 20px; outline: none; border-radius: 0; }
+        .terminal-input:focus { border-bottom-color: var(--text-main); box-shadow: none; }
+        .terminal-btn { background: var(--text-main); color: var(--bg-dark); border: none; width: 100%; padding: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
+        .terminal-btn:hover { background: var(--text-muted); }
+        .sys-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 20px; border-left: 2px solid var(--danger); padding-left: 10px; background: rgba(255, 107, 107, 0.1); padding: 10px; }
+    </style>
 </head>
 <body>
-    <div class="container mt-5" style="max-width: 450px;">
-        <div class="text-center border-bottom pb-3 mb-4">
-            <h1 class="mb-1">NPC</h1>
-            <div class="text-muted">Bunker Entry Interface</div>
+    <div class="terminal-box">
+        <div class="terminal-header">
+            <h2 class="mb-1" style="font-size: 1.5rem;">BUNKER O.S.</h2>
+            <div class="text-muted fs-small">SYSTEM AUTHENTICATION REQ.</div>
         </div>
 
-        <?php if (!empty($error_message)): ?>
-            <div class="alert-bunker text-center py-2 mb-4">
-                <?php echo htmlspecialchars($error_message); ?>
-            </div>
+        <?php if ($error_msg): ?>
+            <div class="sys-error"><?= $error_msg ?></div>
         <?php endif; ?>
 
         <form method="POST">
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-            
-            <div class="form-group">
-                <label for="email" class="form-label">Identification (Email)</label>
-                <input type="email" class="form-control" id="email" name="email" required autofocus>
-            </div>
-            <div class="form-group mb-4">
-                <label for="password" class="form-label">Passphrase</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <button class="btn btn-light btn-block" type="submit">Initialize Sequence</button>
+            <label class="terminal-label">>> Operator_Signal_ID</label>
+            <input type="email" name="operator_id" class="terminal-input" required autofocus autocomplete="off" spellcheck="false">
+
+            <label class="terminal-label">>> Decryption_Cipher</label>
+            <input type="password" name="cipher" class="terminal-input" required autocomplete="off">
+
+            <button type="submit" class="terminal-btn">[ INITIATE UPLINK ] <span class="blinking-cursor"></span></button>
         </form>
 
-        <div id="pwa-install-container" class="text-center mt-4 d-none">
-            <hr>
-            <div class="text-muted fs-small mb-2">Bunker System App Available</div>
-            <button id="btn-install-pwa" class="btn btn-dark btn-sm border-secondary">Install to Device</button>
+        <div class="text-center mt-4 fs-small" style="color: #444;">
+            UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED
         </div>
     </div>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .catch(error => console.log('SW fail:', error));
-            });
-        }
-        let deferredPrompt;
-        const installContainer = document.getElementById('pwa-install-container');
-        const installBtn = document.getElementById('btn-install-pwa');
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); 
-            deferredPrompt = e; 
-            installContainer.classList.remove('d-none');
-        });
-        
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt !== null) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null; 
-                installContainer.classList.add('d-none');
-            }
-        });
-        
-        window.addEventListener('appinstalled', () => {
-            installContainer.classList.add('d-none'); 
-            deferredPrompt = null;
-        });
-    </script>
 </body>
 </html>

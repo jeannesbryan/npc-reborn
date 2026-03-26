@@ -11,7 +11,6 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Proses Logout
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'logout') {
     $_SESSION = array();
     session_destroy();
@@ -19,10 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Proses Eksekusi Backup (Mengompres Root Folder)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'backup') {
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        die("Validasi CSRF gagal.");
+        die("> SYS_ERR: Integrity validation failed.");
     }
 
     $rootPath = realpath(__DIR__ . '/..');
@@ -40,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if (!$file->isDir()) {
                 $filePath = $file->getRealPath();
                 $relativePath = substr($filePath, strlen($rootPath) + 1);
-                // Jangan masukkan file zip itu sendiri jika tersimpan di folder yang sama
                 if ($relativePath !== $zipName) {
                     $zip->addFile($filePath, $relativePath);
                 }
@@ -48,17 +45,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         $zip->close();
 
-        // Download File
         header('Content-Type: application/zip');
         header('Content-disposition: attachment; filename='.$zipName);
         header('Content-Length: ' . filesize($zipPath));
         readfile($zipPath);
-        unlink($zipPath); // Hapus file temporari setelah diunduh
+        unlink($zipPath);
         exit;
     } else {
-        $backup_error = "Sistem gagal membuat kompresi arsip.";
+        $backup_error = "> SYS_ERR: Failed to compress vessel data.";
     }
 }
+
+// ==========================================
+// [ MICRO_TELEMETRY ENGINE ]
+// ==========================================
+function formatBytes($bytes, $precision = 2) {
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+    $bytes /= (1 << (10 * $pow));
+    return round($bytes, $precision) . ' ' . $units[$pow];
+}
+
+function getDirStats($dir) {
+    $size = 0;
+    $count = 0;
+    if (is_dir($dir)) {
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getFilename() !== 'htaccess') {
+                $size += $file->getSize();
+                $count++;
+            }
+        }
+    }
+    return ['size' => $size, 'count' => $count];
+}
+
+$basePath = realpath(__DIR__ . '/..');
+
+// Menghitung DB Size
+$bunker_db_size = file_exists(__DIR__ . '/bunker_data.sqlite') ? filesize(__DIR__ . '/bunker_data.sqlite') : 0;
+$echo_db_size = file_exists($basePath . '/echo/echo_data.sqlite') ? filesize($basePath . '/echo/echo_data.sqlite') : 0;
+$blog_db_size = file_exists($basePath . '/blog/blog_data.sqlite') ? filesize($basePath . '/blog/blog_data.sqlite') : 0;
+$total_db_size = $bunker_db_size + $echo_db_size + $blog_db_size;
+
+// Menghitung Media Size (Uploads)
+$echo_media = getDirStats($basePath . '/echo/uploads');
+$blog_media = getDirStats($basePath . '/blog/uploads');
+$total_media_size = $echo_media['size'] + $blog_media['size'];
+$total_media_count = $echo_media['count'] + $blog_media['count'];
+// ==========================================
 
 // Ambil Access Log
 $db_file = __DIR__ . '/bunker_data.sqlite';
@@ -75,38 +113,32 @@ try {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard - Jeannes Bryan | Bunker</title>
-    <meta name="theme-color" content="#121212">    
+    <title>MAIN OS - Bunker Control</title>
+    <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
-    <link rel="apple-touch-icon" href="../assets/npc-icon.svg">
     <link rel="stylesheet" href="../assets/style.css">
     <style>
-        /* Memastikan card sejajar tinggi dan rapi */
-        .dashboard-cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .dashboard-card {
-            flex: 1 1 30%; /* Berbagi ruang seimbang 3 kolom */
-            min-width: 250px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        .dashboard-cards { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+        .dashboard-card { flex: 1 1 30%; min-width: 250px; display: flex; flex-direction: column; justify-content: space-between; }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; background: var(--text-main); border-radius: 50%; box-shadow: 0 0 10px var(--text-main); margin-right: 8px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        
+        .telemetry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .telemetry-item { background: rgba(0,255,65,0.05); border: 1px dashed var(--border-color); padding: 15px; }
+        .telemetry-val { font-size: 1.5rem; font-weight: bold; color: var(--text-main); margin-bottom: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mt-4 mb-4">
+        
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mt-4 mb-4">
             <div>
-                <h2 class="mb-0">Bunker</h2>
-                <div class="text-muted fs-small">Sistem kendali operasi pusat</div>
+                <h2 class="mb-0"><span class="status-indicator"></span> BUNKER MAIN O.S.</h2>
+                <div class="text-muted fs-small mt-1">> AUTHORIZATION ACCEPTED. WELCOME, COMMANDER.</div>
             </div>
             <form method="POST" style="margin: 0;">
                 <input type="hidden" name="action" value="logout">
-                <button type="submit" class="btn btn-outline-danger">Disconnect</button>
+                <button type="submit" class="btn btn-outline-danger">[ SEVER CONNECTION ]</button>
             </form>
         </div>
 
@@ -118,67 +150,105 @@ try {
             
             <div class="card p-3 dashboard-card">
                 <div>
-                    <h3 class="mb-1">Echo Timeline</h3>
-                    <p class="text-muted fs-small mb-3">Akses jalur transmisi hampa (Micro-blog).</p>
+                    <h3 class="mb-1 text-main">COMMS: ECHO</h3>
+                    <p class="text-muted fs-small mb-3">Shortwave transmission station. Broadcast signals into the void.</p>
                 </div>
-                <a href="../echo/index.php" class="btn btn-light btn-block">Enter Echo &rarr;</a>
+                <a href="../echo/index.php" class="btn btn-light btn-block">> INITIALIZE_ECHO</a>
             </div>
 
             <div class="card p-3 dashboard-card">
                 <div>
-                    <h3 class="mb-1">Blog Manager</h3>
-                    <p class="text-muted fs-small mb-3">Tulis dan atur arsip manifesto publik Anda.</p>
+                    <h3 class="mb-1 text-main">ARCHIVE: BLOG</h3>
+                    <p class="text-muted fs-small mb-3">Manifesto drafting module and long-term data storage.</p>
                 </div>
-                <a href="blog_manager.php" class="btn btn-dark border-secondary btn-block text-center">Open Editor</a>
+                <a href="blog_manager.php" class="btn btn-dark btn-block">> OPEN_ARCHIVE</a>
             </div>
 
-            <div class="card p-3 dashboard-card" style="border-color: var(--danger);">
+            <div class="card p-3 dashboard-card" style="border-color: var(--danger); box-shadow: inset 0 0 15px rgba(255,0,60,0.1);">
                 <div>
-                    <h3 class="mb-1 text-danger">Evacuation Protocol</h3>
-                    <p class="text-muted fs-small mb-3">Kompres dan unduh kode sumber & database situs.</p>
+                    <h3 class="mb-1 text-danger">PROTOCOL: EVAC</h3>
+                    <p class="text-danger fs-small mb-3" style="opacity: 0.8;">Package and secure all server data to a local device.</p>
                 </div>
-                <form method="POST" onsubmit="return confirm('Memulai pengarsipan file server. Lanjutkan?');" style="margin: 0;">
+                <form method="POST" onsubmit="return confirm('WARNING: Initiating full system data download. Proceed?');" style="margin: 0;">
                     <input type="hidden" name="action" value="backup">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                    <button type="submit" class="btn btn-outline-danger btn-block w-100">Download Full Backup</button>
+                    <button type="submit" class="btn btn-outline-danger btn-block w-100">[ EXECUTE_BACKUP ]</button>
                 </form>
             </div>
 
         </div>
 
+        <div class="card p-3 mb-4">
+            <h3 class="mb-3">> CORE_TELEMETRY: DATA BANK INTEGRITY</h3>
+            <div class="telemetry-grid">
+                
+                <div class="telemetry-item">
+                    <div class="text-muted fs-small">> TOTAL_DB_WEIGHT</div>
+                    <div class="telemetry-val"><?= formatBytes($total_db_size) ?></div>
+                    <div class="fs-small" style="color: var(--text-muted);">
+                        BUNKER: <?= formatBytes($bunker_db_size) ?><br>
+                        ECHO: <?= formatBytes($echo_db_size) ?><br>
+                        BLOG: <?= formatBytes($blog_db_size) ?>
+                    </div>
+                </div>
+
+                <div class="telemetry-item">
+                    <div class="text-muted fs-small">> TOTAL_MEDIA_PAYLOAD</div>
+                    <div class="telemetry-val"><?= formatBytes($total_media_size) ?></div>
+                    <div class="fs-small" style="color: var(--text-muted);">
+                        ATTACHMENTS: <?= $total_media_count ?> FILES<br>
+                        ECHO_DIR: <?= formatBytes($echo_media['size']) ?><br>
+                        BLOG_DIR: <?= formatBytes($blog_media['size']) ?>
+                    </div>
+                </div>
+
+                <div class="telemetry-item">
+                    <div class="text-muted fs-small">> SYS_ENVIRONMENT</div>
+                    <div class="telemetry-val" style="font-size: 1.2rem; padding-top: 5px;">STABLE</div>
+                    <div class="fs-small mt-1" style="color: var(--text-muted);">
+                        PHP_VERSION: <?= phpversion() ?><br>
+                        SQLITE_VERSION: <?= $pdo->query('select sqlite_version()')->fetchColumn() ?><br>
+                        MAX_UPLOAD: <?= ini_get('upload_max_filesize') ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <div class="card p-3 mb-5">
-            <h3 class="mb-3">Security Access Logs</h3>
+            <h3 class="mb-3">> RADAR: ACCESS LOGS</h3>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Waktu (WIB)</th>
-                            <th>Status</th>
-                            <th>IP Address</th>
-                            <th>Browser Info</th>
+                            <th>TIMESTAMP (WIB)</th>
+                            <th>STATUS</th>
+                            <th>IP_ORIGIN</th>
+                            <th>ENTITY_SIGNATURE (Browser)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($logs) > 0): ?>
                             <?php foreach ($logs as $log): ?>
                                 <tr>
-                                    <td class="text-muted"><?= htmlspecialchars($log['created_at']) ?></td>
-                                    <td class="fw-bold <?= $log['status'] === 'SUCCESS' ? 'text-success' : 'text-danger' ?>">
-                                        <?= htmlspecialchars($log['status']) ?>
+                                    <td class="text-muted"><?= htmlspecialchars($log['created_at'] ?? '') ?></td>
+                                    <td class="fw-bold <?= ($log['status'] ?? '') === 'SUCCESS' ? 'text-success' : 'text-danger' ?>">
+                                        [ <?= htmlspecialchars($log['status'] ?? 'UNKNOWN') ?> ]
                                     </td>
-                                    <td><?= htmlspecialchars($log['ip_address']) ?></td>
-                                    <td class="text-muted fs-small" title="<?= htmlspecialchars($log['user_agent']) ?>">
-                                        <?= substr(htmlspecialchars($log['user_agent']), 0, 25) ?>...
+                                    <td><?= htmlspecialchars($log['ip_address'] ?? 'UNKNOWN_IP') ?></td>
+                                    <td class="text-muted fs-small" title="<?= htmlspecialchars($log['user_agent'] ?? 'UNKNOWN_ENTITY') ?>">
+                                        <?= substr(htmlspecialchars($log['user_agent'] ?? 'UNKNOWN_ENTITY'), 0, 30) ?>...
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="4" class="text-center text-muted">Belum ada log terekam.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted">RADAR CLEAR. NO ENTITIES DETECTED.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </div>
+        
     </div>
 </body>
 </html>
