@@ -119,19 +119,47 @@ try {
         
         #pwa-install-banner { display: none; background: rgba(0,255,65,0.1); border: 1px solid var(--text-main); padding: 12px; margin-bottom: 20px; align-items: center; justify-content: space-between; }
 
-        /* Override Paksa Modul Berbahaya (Merah) */
-        .card.card-danger { 
-            border-color: var(--danger) !important; 
-            border-top-color: var(--danger) !important; /* Paksa timpa warna hijau */
-            box-shadow: inset 0 0 10px rgba(255,0,60,0.05);
-        }
+        .card.card-danger { border-color: var(--danger) !important; border-top-color: var(--danger) !important; box-shadow: inset 0 0 10px rgba(255,0,60,0.05); }
 
-        /* Stealth Buttons - Glow on Hover */
         .btn-hover-green { transition: 0.3s; }
         .btn-hover-green:hover { background: var(--text-main) !important; color: var(--bg-dark) !important; border-color: var(--text-main) !important; box-shadow: 0 0 15px rgba(0,255,65,0.3); }
+
+        /* ========================================= */
+        /* SPLASH SCREEN CSS V.2 (MINIMALIST) */
+        /* ========================================= */
+        #splash-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-dark); z-index: 99999; 
+            display: flex; align-items: center; justify-content: center; 
+            text-align: center; transition: opacity 0.5s ease; 
+            font-family: 'JetBrains Mono', monospace; 
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .splash-content { font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; font-weight: bold;}
+        .splash-hidden { opacity: 0; pointer-events: none; }
+
+        /* Animasi Titik-Titik (Loading) */
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
     </style>
 </head>
 <body>
+
+    <div id="splash-overlay">
+        <div class="splash-content text-main">
+            > PROCESSING_ENCRYPTED_SATELLITE_TRANSMISSION<span class="loading-dots"></span>
+        </div>
+    </div>
+
     <div class="container" style="max-width: 1200px;">
         
         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mt-4 mb-4">
@@ -164,7 +192,7 @@ try {
                     <h3 class="mb-1 text-main">COMMS: ECHO</h3>
                     <p class="text-muted fs-small mb-3">Shortwave transmission station.</p>
                 </div>
-                <a href="../echo/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green">> INITIALIZE</a>
+                <a href="../echo/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -172,7 +200,7 @@ try {
                     <h3 class="mb-1 text-main">ARCHIVE: BLOG</h3>
                     <p class="text-muted fs-small mb-3">Manifesto drafting & data storage.</p>
                 </div>
-                <a href="blog_manager.php" target="_blank" class="btn btn-dark btn-block btn-hover-green">> OPEN_ARCHIVE</a>
+                <a href="blog_manager.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> OPEN_ARCHIVE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -180,7 +208,7 @@ try {
                     <h3 class="mb-1 text-main">NAV: INDEX</h3>
                     <p class="text-muted fs-small mb-3">Bookmark and directory cluster.</p>
                 </div>
-                <a href="../index/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green">> OPEN_DIRECTORIES</a>
+                <a href="../index/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> OPEN_DIRECTORIES</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -188,7 +216,7 @@ try {
                     <h3 class="mb-1 text-main">OP: GRID</h3>
                     <p class="text-muted fs-small mb-3">Logistics and task operation matrix.</p>
                 </div>
-                <a href="../grid/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green">> ACCESS_GRID</a>
+                <a href="../grid/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> ACCESS_GRID</a>
             </div>
 
             <div class="card p-3 dashboard-card card-danger">
@@ -196,7 +224,7 @@ try {
                     <h3 class="mb-1 text-danger">SECURE: VAULT</h3>
                     <p class="text-danger fs-small mb-3" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
                 </div>
-                <a href="../vault/index.php" target="_blank" class="btn btn-outline-danger btn-block">> UNLOCK_VAULT</a>
+                <a href="../vault/index.php" target="_blank" class="btn btn-outline-danger btn-block app-link" data-danger="true">> UNLOCK_VAULT</a>
             </div>
 
             <div class="card p-3 dashboard-card card-danger">
@@ -290,6 +318,42 @@ try {
     </div>
 
     <script>
+        // =========================================
+        // [ SPLASH SCREEN ENGINE V.2 ]
+        // =========================================
+        document.addEventListener("DOMContentLoaded", () => {
+            const splash = document.getElementById('splash-overlay');
+            const splashContent = splash.querySelector('.splash-content');
+
+            // 1. BOOT SEQUENCE (Saat baru masuk ke Dashboard)
+            // Munculkan selama tepat 3000ms (3 detik)
+            setTimeout(() => { 
+                splash.classList.add('splash-hidden'); 
+            }, 3000);
+
+            // 2. ROUTING SEQUENCE (Saat mengeklik tombol App)
+            const appLinks = document.querySelectorAll('.app-link');
+            appLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault(); // Cegah buka tab secara instan
+                    const targetUrl = this.getAttribute('href');
+                    const isDanger = this.getAttribute('data-danger') === 'true';
+
+                    // Ubah warna sesuai target (Merah untuk Vault, Hijau untuk sisanya)
+                    splashContent.className = `splash-content ${isDanger ? 'text-danger' : 'text-main'}`;
+                    
+                    // Tampilkan kembali layar hitam
+                    splash.classList.remove('splash-hidden');
+
+                    // Selesai 3 detik, buka tab baru dan sembunyikan layar hitam
+                    setTimeout(() => { 
+                        window.open(targetUrl, '_blank'); 
+                        splash.classList.add('splash-hidden'); 
+                    }, 3000);
+                });
+            });
+        });
+
         // PWA Script
         let deferredPrompt;
         const pwaBanner = document.getElementById('pwa-install-banner');

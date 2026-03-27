@@ -12,26 +12,37 @@ $error_msg = '';
 
 try {
     $pdo = new PDO("sqlite:" . $db_file);
+    // Tambahkan Timeout agar tidak "Database is Locked" saat diserang DDOS
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 5); 
 } catch (PDOException $e) {
     die("SYS_HALT: Main database connection lost.");
 }
 
+// [ PATCH 1 ]: Anti IP Spoofing. 
+// Hanya gunakan REMOTE_ADDR. Jika pakai Cloudflare, ganti jadi $_SERVER['HTTP_CF_CONNECTING_IP']
 function get_ip() {
-    return $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+    return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN_IP';
 }
 
 function log_access($pdo, $ip, $ua, $status) {
-    $stmt = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status) VALUES (?, ?, ?)");
-    $stmt->execute([$ip, $ua, $status]);
+    $time = date('Y-m-d H:i:s');
+    $stmt = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$ip, $ua, $status, $time]);
+    
+    // [ PATCH 3 ]: Auto-Purge. Hapus log yang usianya lebih dari 7 hari agar DB tetap ringan.
+    $purge_time = date('Y-m-d H:i:s', strtotime('-7 days'));
+    $pdo->prepare("DELETE FROM access_logs WHERE created_at < ?")->execute([$purge_time]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ip = get_ip();
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
     
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= datetime('now', '-15 minutes', 'localtime')");
-    $stmt->execute([$ip]);
+    // [ PATCH 2 ]: Sinkronisasi Zona Waktu via PHP
+    $time_limit = date('Y-m-d H:i:s', strtotime('-15 minutes'));
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= ?");
+    $stmt->execute([$ip, $time_limit]);
     $failed_attempts = $stmt->fetchColumn();
 
     if ($failed_attempts >= 5) {
