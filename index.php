@@ -17,7 +17,7 @@
         .social-btn:hover { background: var(--text-main); color: var(--bg-dark); box-shadow: 0 0 15px var(--text-main); }
 
         /* ========================================= */
-        /* SPLASH SCREEN CSS */
+        /* SPLASH SCREEN CSS (PATCHED) */
         /* ========================================= */
         #splash-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -27,8 +27,27 @@
             background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
             background-size: 30px 30px;
             font-family: 'JetBrains Mono', monospace;
+            padding: 20px; /* Jarak aman agar tidak kena pinggir */
         }
-        .splash-content { font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; font-weight: bold; color: var(--text-main); }
+        .splash-content { 
+            font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; 
+            font-weight: bold; color: var(--text-main); 
+            
+            /* [ PATCH ] Menangani Overlap pada Layar Kecil */
+            max-width: 95%;        /* Lebar maksimal teks */
+            overflow-wrap: break-word; /* Potong kata di mana saja jika kepanjangan */
+            word-wrap: break-word;     /* Dukungan browser lama */
+            word-break: break-all;     /* Paksa potong tanpa spasi */
+        }
+        
+        /* Optimasi tambahan untuk layar HP super sempit */
+        @media (max-width: 480px) {
+            .splash-content {
+                font-size: 0.9rem; /* Ukuran font dikecilkan */
+                letter-spacing: 1px; /* Jarak huruf dirapatkan */
+            }
+        }
+
         .splash-hidden { opacity: 0; pointer-events: none; }
         
         .loading-dots::after { content: ''; animation: dots 1.5s infinite; }

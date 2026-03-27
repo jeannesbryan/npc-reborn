@@ -12,15 +12,14 @@ $error_msg = '';
 
 try {
     $pdo = new PDO("sqlite:" . $db_file);
-    // Tambahkan Timeout agar tidak "Database is Locked" saat diserang DDOS
+    // Tambahkan Timeout agar tidak "Database is Locked"
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_TIMEOUT, 5); 
 } catch (PDOException $e) {
     die("SYS_HALT: Main database connection lost.");
 }
 
-// [ PATCH 1 ]: Anti IP Spoofing. 
-// Hanya gunakan REMOTE_ADDR. Jika pakai Cloudflare, ganti jadi $_SERVER['HTTP_CF_CONNECTING_IP']
+// Anti IP Spoofing
 function get_ip() {
     return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN_IP';
 }
@@ -30,7 +29,7 @@ function log_access($pdo, $ip, $ua, $status) {
     $stmt = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, ?, ?)");
     $stmt->execute([$ip, $ua, $status, $time]);
     
-    // [ PATCH 3 ]: Auto-Purge. Hapus log yang usianya lebih dari 7 hari agar DB tetap ringan.
+    // Auto-Purge: Hapus log usang (> 7 hari)
     $purge_time = date('Y-m-d H:i:s', strtotime('-7 days'));
     $pdo->prepare("DELETE FROM access_logs WHERE created_at < ?")->execute([$purge_time]);
 }
@@ -39,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ip = get_ip();
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
     
-    // [ PATCH 2 ]: Sinkronisasi Zona Waktu via PHP
+    // Sinkronisasi Zona Waktu via PHP
     $time_limit = date('Y-m-d H:i:s', strtotime('-15 minutes'));
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= ?");
     $stmt->execute([$ip, $time_limit]);
@@ -74,12 +73,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TERMINAL LOGIN - Bunker</title>
-    <meta name="theme-color" content="#0a0a0a">    
+    <meta name="theme-color" content="#050505">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
     <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="manifest" href="manifest.json">
     <style>
-        body { background-color: #050505; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px; }
-        .terminal-box { background: #0a0a0a; border: 1px solid var(--border-color); padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.8); position: relative; }
+        body { background-color: #050505; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px; }
+        
+        /* [PATCH UI]: Lebar diubah dari 100% menjadi 90% agar memiliki ruang napas di layar HP */
+        .terminal-box { background: #0a0a0a; border: 1px solid var(--border-color); padding: 30px; width: 90%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.8); position: relative; }
         .terminal-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--text-muted); }
         .terminal-header { text-align: center; margin-bottom: 30px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; }
         .terminal-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
@@ -88,13 +91,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .terminal-btn { background: var(--text-main); color: var(--bg-dark); border: none; width: 100%; padding: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         .terminal-btn:hover { background: var(--text-muted); }
         .sys-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 20px; border-left: 2px solid var(--danger); padding-left: 10px; background: rgba(255, 107, 107, 0.1); padding: 10px; }
+
+        /* ========================================= */
+        /* SPLASH SCREEN CSS (PWA BOOT & RESPONSIVE PATCH) */
+        /* ========================================= */
+        #splash-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-dark, #050505); z-index: 99999; 
+            display: flex; align-items: center; justify-content: center; 
+            text-align: center; transition: opacity 0.5s ease; 
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 30px 30px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px; 
+        }
+        .splash-content { 
+            font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; 
+            font-weight: bold; color: var(--text-main); 
+            max-width: 95%; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; 
+        }
+        @media (max-width: 480px) { .splash-content { font-size: 0.9rem; letter-spacing: 1px; } }
+        .splash-hidden { opacity: 0; pointer-events: none; }
+        
+        .loading-dots::after { content: ''; animation: dots 1.5s infinite; }
+        @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
+
+        /* ========================================= */
+        /* PWA BANNER CSS */
+        /* ========================================= */
+        #pwa-install-banner {
+            display: none; background: rgba(0,255,65,0.05); border: 1px dashed var(--text-main); 
+            padding: 15px; margin-top: 20px; align-items: center; justify-content: space-between; 
+            /* [PATCH UI]: Mengikuti lebar Terminal Box (90%) */
+            width: 90%; max-width: 400px; box-shadow: 0 0 15px rgba(0,255,65,0.05);
+            font-family: 'JetBrains Mono', monospace;
+        }
     </style>
 </head>
 <body>
+
+    <div id="splash-overlay">
+        <div class="splash-content">
+            > BOOTING_MAIN_OS_ENVIRONMENT<span class="loading-dots"></span>
+        </div>
+    </div>
+
     <div class="terminal-box">
         <div class="terminal-header">
-            <h2 class="mb-1" style="font-size: 1.5rem;">BUNKER O.S.</h2>
-            <div class="text-muted fs-small">SYSTEM AUTHENTICATION REQ.</div>
+            <h2 class="mb-1 text-main" style="font-size: 1.5rem; letter-spacing: 2px;">[ BUNKER O.S ]</h2>
+            <div class="text-muted fs-small">> SYSTEM AUTHENTICATION REQ.</div>
         </div>
 
         <?php if ($error_msg): ?>
@@ -115,5 +160,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED
         </div>
     </div>
+
+    <div id="pwa-install-banner">
+        <div style="text-align: left;">
+            <strong class="text-main" style="letter-spacing: 1px;">> INSTALL_BUNKER_OS</strong><br>
+            <span class="fs-small text-muted" style="font-size: 0.75rem;">Add to home screen for native access.</span>
+        </div>
+        <button id="btn-install-pwa" style="background: var(--text-main); color: var(--bg-dark); border: none; padding: 5px 10px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'JetBrains Mono', monospace;">[ INSTALL ]</button>
+    </div>
+
+    <script>
+        // Hapus Splash Screen setelah 3 detik
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => {
+                document.getElementById('splash-overlay').classList.add('splash-hidden');
+            }, 3000);
+        });
+
+        // PWA Engine & Install Prompt
+        let deferredPrompt;
+        const pwaBanner = document.getElementById('pwa-install-banner');
+        const installBtn = document.getElementById('btn-install-pwa');
+
+        // Menangkap sinyal dari browser bahwa aplikasi siap diinstal
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Cegah prompt bawaan browser
+            deferredPrompt = e;
+            pwaBanner.style.display = 'flex'; // Munculkan banner kita
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    pwaBanner.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Failed:', err));
+        }
+    </script>
 </body>
 </html>
