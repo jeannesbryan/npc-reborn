@@ -276,7 +276,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             <div class="story-radar-container">
                 <?php foreach($active_stories as $st): ?>
                     <div class="story-box" onclick="viewStory(<?= $st['id'] ?>)" title="Decrypt this payload">
-                        <div class="fw-bold fs-small">[ PACKET_<?= $st['id'] ?> ]</div>
+                        <div class="fw-bold fs-small">[ ECHO_LOG ]</div>
                         <div class="fs-small mt-1" style="opacity: 0.8;">> DECAYING...</div>
                     </div>
                 <?php endforeach; ?>
