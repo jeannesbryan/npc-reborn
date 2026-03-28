@@ -2,43 +2,30 @@
 session_start();
 date_default_timezone_set('Asia/Jakarta');
 
-if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    header("Location: dashboard.php");
-    exit;
-}
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) { header("Location: dashboard.php"); exit; }
 
 $db_file = __DIR__ . '/bunker_data.sqlite';
 $error_msg = '';
 
 try {
     $pdo = new PDO("sqlite:" . $db_file);
-    // Tambahkan Timeout agar tidak "Database is Locked"
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_TIMEOUT, 5); 
-} catch (PDOException $e) {
-    die("SYS_HALT: Main database connection lost.");
-}
+} catch (PDOException $e) { die("SYS_HALT: Main database connection lost."); }
 
-// Anti IP Spoofing
-function get_ip() {
-    return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN_IP';
-}
+function get_ip() { return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN_IP'; }
 
 function log_access($pdo, $ip, $ua, $status) {
     $time = date('Y-m-d H:i:s');
     $stmt = $pdo->prepare("INSERT INTO access_logs (ip_address, user_agent, status, created_at) VALUES (?, ?, ?, ?)");
     $stmt->execute([$ip, $ua, $status, $time]);
     
-    // Auto-Purge: Hapus log usang (> 7 hari)
     $purge_time = date('Y-m-d H:i:s', strtotime('-7 days'));
     $pdo->prepare("DELETE FROM access_logs WHERE created_at < ?")->execute([$purge_time]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $ip = get_ip();
-    $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
-    
-    // Sinkronisasi Zona Waktu via PHP
+    $ip = get_ip(); $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
     $time_limit = date('Y-m-d H:i:s', strtotime('-15 minutes'));
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= ?");
     $stmt->execute([$ip, $time_limit]);
@@ -47,22 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($failed_attempts >= 5) {
         $error_msg = "PROTOCOL LOCKDOWN: Too many anomalies. Signal temporarily blocked.";
     } else {
-        $email = $_POST['operator_id'] ?? '';
-        $password = $_POST['cipher'] ?? '';
-
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$email]);
+        $email = $_POST['operator_id'] ?? ''; $password = $_POST['cipher'] ?? '';
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?"); $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password_hash'])) {
-            $_SESSION['logged_in'] = true;
-            $_SESSION['user_id'] = $user['id'];
-            log_access($pdo, $ip, $ua, 'SUCCESS');
-            header("Location: dashboard.php");
-            exit;
+            $_SESSION['logged_in'] = true; $_SESSION['user_id'] = $user['id'];
+            log_access($pdo, $ip, $ua, 'SUCCESS'); header("Location: dashboard.php"); exit;
         } else {
-            log_access($pdo, $ip, $ua, 'FAILED');
-            $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
+            log_access($pdo, $ip, $ua, 'FAILED'); $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
         }
     }
 }
@@ -76,12 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="theme-color" content="#050505">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
     <link rel="stylesheet" href="../assets/style.css">
-    
     <link rel="manifest" href="manifest.json">
     <style>
         body { background-color: #050505; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px; }
-        
-        /* [PATCH UI]: Lebar diubah dari 100% menjadi 90% agar memiliki ruang napas di layar HP */
         .terminal-box { background: #0a0a0a; border: 1px solid var(--border-color); padding: 30px; width: 90%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.8); position: relative; }
         .terminal-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--text-muted); }
         .terminal-header { text-align: center; margin-bottom: 30px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; }
@@ -91,41 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .terminal-btn { background: var(--text-main); color: var(--bg-dark); border: none; width: 100%; padding: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         .terminal-btn:hover { background: var(--text-muted); }
         .sys-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 20px; border-left: 2px solid var(--danger); padding-left: 10px; background: rgba(255, 107, 107, 0.1); padding: 10px; }
-
-        /* ========================================= */
-        /* SPLASH SCREEN CSS (PWA BOOT & RESPONSIVE PATCH) */
-        /* ========================================= */
-        #splash-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg-dark, #050505); z-index: 99999; 
-            display: flex; align-items: center; justify-content: center; 
-            text-align: center; transition: opacity 0.5s ease; 
-            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 30px 30px;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 20px; 
-        }
-        .splash-content { 
-            font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; 
-            font-weight: bold; color: var(--text-main); 
-            max-width: 95%; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; 
-        }
-        @media (max-width: 480px) { .splash-content { font-size: 0.9rem; letter-spacing: 1px; } }
-        .splash-hidden { opacity: 0; pointer-events: none; }
-        
-        .loading-dots::after { content: ''; animation: dots 1.5s infinite; }
-        @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
-
-        /* ========================================= */
-        /* PWA BANNER CSS */
-        /* ========================================= */
-        #pwa-install-banner {
-            display: none; background: rgba(0,255,65,0.05); border: 1px dashed var(--text-main); 
-            padding: 15px; margin-top: 20px; align-items: center; justify-content: space-between; 
-            /* [PATCH UI]: Mengikuti lebar Terminal Box (90%) */
-            width: 90%; max-width: 400px; box-shadow: 0 0 15px rgba(0,255,65,0.05);
-            font-family: 'JetBrains Mono', monospace;
-        }
     </style>
 </head>
 <body>
@@ -149,16 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST">
             <label class="terminal-label">>> Operator_Signal_ID</label>
             <input type="email" name="operator_id" class="terminal-input" required autofocus autocomplete="off" spellcheck="false">
-
             <label class="terminal-label">>> Decryption_Cipher</label>
             <input type="password" name="cipher" class="terminal-input" required autocomplete="off">
-
             <button type="submit" class="terminal-btn">[ INITIATE UPLINK ] <span class="blinking-cursor"></span></button>
         </form>
 
-        <div class="text-center mt-4 fs-small" style="color: #444;">
-            UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED
-        </div>
+        <div class="text-center mt-4 fs-small" style="color: #444;">UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED</div>
     </div>
 
     <div id="pwa-install-banner">
@@ -170,40 +108,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Hapus Splash Screen setelah 3 detik
         document.addEventListener("DOMContentLoaded", () => {
-            setTimeout(() => {
-                document.getElementById('splash-overlay').classList.add('splash-hidden');
-            }, 3000);
+            setTimeout(() => { document.getElementById('splash-overlay').classList.add('splash-hidden'); }, 3000);
         });
 
-        // PWA Engine & Install Prompt
         let deferredPrompt;
         const pwaBanner = document.getElementById('pwa-install-banner');
         const installBtn = document.getElementById('btn-install-pwa');
 
-        // Menangkap sinyal dari browser bahwa aplikasi siap diinstal
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Cegah prompt bawaan browser
-            deferredPrompt = e;
-            pwaBanner.style.display = 'flex'; // Munculkan banner kita
+            e.preventDefault(); deferredPrompt = e; pwaBanner.style.display = 'flex';
         });
 
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    pwaBanner.style.display = 'none';
-                }
+                if (outcome === 'accepted') { pwaBanner.style.display = 'none'; }
                 deferredPrompt = null;
             }
         });
 
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Failed:', err));
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Failed:', err)); }
     </script>
 </body>
 </html>

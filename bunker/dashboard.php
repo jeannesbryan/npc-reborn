@@ -2,26 +2,15 @@
 session_start();
 date_default_timezone_set('Asia/Jakarta');
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: index.php");
-    exit;
-}
-
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) { header("Location: index.php"); exit; }
+if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'logout') {
-    $_SESSION = array();
-    session_destroy();
-    header("Location: index.php");
-    exit;
+    $_SESSION = array(); session_destroy(); header("Location: index.php"); exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'backup') {
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        die("> SYS_ERR: Integrity validation failed.");
-    }
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) { die("> SYS_ERR: Integrity validation failed."); }
     $rootPath = realpath(__DIR__ . '/..');
     $zipName = 'bunker_backup_' . date('Y-m-d_H-i-s') . '.zip';
     $zipPath = sys_get_temp_dir() . '/' . $zipName;
@@ -33,33 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if (!$file->isDir()) {
                 $filePath = $file->getRealPath();
                 $relativePath = substr($filePath, strlen($rootPath) + 1);
-                if ($relativePath !== $zipName) {
-                    $zip->addFile($filePath, $relativePath);
-                }
+                if ($relativePath !== $zipName) { $zip->addFile($filePath, $relativePath); }
             }
         }
         $zip->close();
-        header('Content-Type: application/zip');
-        header('Content-disposition: attachment; filename='.$zipName);
-        header('Content-Length: ' . filesize($zipPath));
-        readfile($zipPath);
-        unlink($zipPath); 
-        exit;
-    } else {
-        $backup_error = "> SYS_ERR: Failed to compress vessel data.";
-    }
+        header('Content-Type: application/zip'); header('Content-disposition: attachment; filename='.$zipName);
+        header('Content-Length: ' . filesize($zipPath)); readfile($zipPath); unlink($zipPath); exit;
+    } else { $backup_error = "> SYS_ERR: Failed to compress vessel data."; }
 }
 
-// ==========================================
-// [ MICRO_TELEMETRY ENGINE ]
-// ==========================================
 function formatBytes($bytes, $precision = 2) {
-    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    $bytes = max($bytes, 0);
-    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-    $pow = min($pow, count($units) - 1);
-    $bytes /= (1 << (10 * $pow));
-    return round($bytes, $precision) . ' ' . $units[$pow];
+    $units = ['B', 'KB', 'MB', 'GB', 'TB']; $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024)); $pow = min($pow, count($units) - 1);
+    $bytes /= (1 << (10 * $pow)); return round($bytes, $precision) . ' ' . $units[$pow];
 }
 
 function getDirStats($dir) {
@@ -67,22 +42,18 @@ function getDirStats($dir) {
     if (is_dir($dir)) {
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
         foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getFilename() !== 'htaccess') {
-                $size += $file->getSize(); $count++;
-            }
+            if ($file->isFile() && $file->getFilename() !== 'htaccess') { $size += $file->getSize(); $count++; }
         }
     }
     return ['size' => $size, 'count' => $count];
 }
 
 $basePath = realpath(__DIR__ . '/..');
-
 $bunker_db_size = file_exists(__DIR__ . '/bunker_data.sqlite') ? filesize(__DIR__ . '/bunker_data.sqlite') : 0;
 $echo_db_size = file_exists($basePath . '/echo/echo_data.sqlite') ? filesize($basePath . '/echo/echo_data.sqlite') : 0;
 $blog_db_size = file_exists($basePath . '/blog/blog_data.sqlite') ? filesize($basePath . '/blog/blog_data.sqlite') : 0;
 $index_db_size = file_exists($basePath . '/index/index_data.sqlite') ? filesize($basePath . '/index/index_data.sqlite') : 0;
 $grid_db_size = file_exists($basePath . '/grid/grid_data.sqlite') ? filesize($basePath . '/grid/grid_data.sqlite') : 0;
-
 $total_db_size = $bunker_db_size + $echo_db_size + $blog_db_size + $index_db_size + $grid_db_size;
 
 $echo_media = getDirStats($basePath . '/echo/uploads');
@@ -108,66 +79,12 @@ try {
     <link rel="stylesheet" href="../assets/style.css">
     <link rel="manifest" href="../manifest.json">
     <style>
+        /* Hanya menyisakan CSS khusus untuk tata letak halaman ini */
         .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .dashboard-card { display: flex; flex-direction: column; justify-content: space-between; }
-        .status-indicator { display: inline-block; width: 10px; height: 10px; background: var(--text-main); border-radius: 50%; box-shadow: 0 0 10px var(--text-main); margin-right: 8px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        
         .telemetry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .telemetry-item { background: rgba(0,255,65,0.05); border: 1px dashed var(--border-color); padding: 15px; }
         .telemetry-val { font-size: 1.5rem; font-weight: bold; color: var(--text-main); margin-bottom: 5px; }
-        
-        #pwa-install-banner { display: none; background: rgba(0,255,65,0.1); border: 1px solid var(--text-main); padding: 12px; margin-bottom: 20px; align-items: center; justify-content: space-between; }
-
-        .card.card-danger { border-color: var(--danger) !important; border-top-color: var(--danger) !important; box-shadow: inset 0 0 10px rgba(255,0,60,0.05); }
-
-        .btn-hover-green { transition: 0.3s; }
-        .btn-hover-green:hover { background: var(--text-main) !important; color: var(--bg-dark) !important; border-color: var(--text-main) !important; box-shadow: 0 0 15px rgba(0,255,65,0.3); }
-
-        /* ========================================= */
-        /* SPLASH SCREEN CSS (PATCHED) */
-        /* ========================================= */
-        #splash-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg-dark); z-index: 99999; 
-            display: flex; align-items: center; justify-content: center; 
-            text-align: center; transition: opacity 0.5s ease; 
-            font-family: 'JetBrains Mono', monospace; 
-            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 30px 30px;
-            padding: 20px; /* Jarak aman agar tidak kena pinggir */
-        }
-        .splash-content { 
-            font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; 
-            font-weight: bold;
-            
-            /* [ PATCH ] Menangani Overlap pada Layar Kecil */
-            max-width: 95%;        /* Lebar maksimal teks */
-            overflow-wrap: break-word; /* Potong kata di mana saja jika kepanjangan */
-            word-wrap: break-word;     /* Dukungan browser lama */
-            word-break: break-all;     /* Paksa potong tanpa spasi */
-        }
-
-        /* Optimasi tambahan untuk layar HP sempit */
-        @media (max-width: 480px) {
-            .splash-content {
-                font-size: 0.9rem; /* Ukuran dikecilkan */
-                letter-spacing: 1px; /* Jarak huruf dirapatkan */
-            }
-        }
-
-        .splash-hidden { opacity: 0; pointer-events: none; }
-
-        .loading-dots::after {
-            content: '';
-            animation: dots 1.5s infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
     </style>
 </head>
 <body>
@@ -193,10 +110,10 @@ try {
 
         <div id="pwa-install-banner">
             <div>
-                <strong>> SYS_OPTIMIZATION_AVAILABLE</strong><br>
+                <strong class="text-main">> SYS_OPTIMIZATION_AVAILABLE</strong><br>
                 <span class="fs-small text-muted">Install UI to home screen for isolated access.</span>
             </div>
-            <button id="btn-install-pwa" class="btn btn-dark border-secondary btn-sm">[ INSTALL_MODULE ]</button>
+            <button id="btn-install-pwa" class="btn btn-dark border-secondary btn-sm" style="font-family: 'JetBrains Mono', monospace;">[ INSTALL_MODULE ]</button>
         </div>
 
         <?php if (isset($backup_error)): ?>
@@ -237,23 +154,23 @@ try {
                 <a href="../grid/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> ACCESS_GRID</a>
             </div>
 
-            <div class="card p-3 dashboard-card card-danger">
+            <div class="card p-3 dashboard-card">
                 <div>
-                    <h3 class="mb-1 text-danger">SECURE: VAULT</h3>
-                    <p class="text-danger fs-small mb-3" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
+                    <h3 class="mb-1 text-main">SECURE: VAULT</h3>
+                    <p class="text-muted fs-small mb-3" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
                 </div>
-                <a href="../vault/index.php" target="_blank" class="btn btn-outline-danger btn-block app-link" data-danger="true">> UNLOCK_VAULT</a>
+                <a href="../vault/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> UNLOCK_VAULT</a>
             </div>
 
-            <div class="card p-3 dashboard-card card-danger">
+            <div class="card p-3 dashboard-card">
                 <div>
-                    <h3 class="mb-1 text-danger">PROTOCOL: EVAC</h3>
-                    <p class="text-danger fs-small mb-3" style="opacity: 0.8;">Package and secure all server data into a zip payload.</p>
+                    <h3 class="mb-1 text-main">PROTOCOL: EVAC</h3>
+                    <p class="text-muted fs-small mb-3" style="opacity: 0.8;">Package and secure all server data into a zip payload.</p>
                 </div>
                 <form method="POST" onsubmit="return confirm('WARNING: Initiating full system data download. Proceed?');" style="margin: 0;">
                     <input type="hidden" name="action" value="backup">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                    <button type="submit" class="btn btn-outline-danger btn-block w-100">> EXECUTE_BACKUP</button>
+                    <button type="submit" class="btn btn-dark btn-block btn-hover-green w-100">> EXECUTE_BACKUP</button>
                 </form>
             </div>
 
@@ -272,7 +189,7 @@ try {
                         <span class="text-main">></span> BLOG: <?= formatBytes($blog_db_size) ?><br>
                         <span class="text-main">></span> INDEX: <?= formatBytes($index_db_size) ?><br>
                         <span class="text-main">></span> GRID: <?= formatBytes($grid_db_size) ?><br>
-                        <span class="text-danger">> VAULT: [ CLOUD_SATELLITE ]</span>
+                        <span class="text-main">> VAULT: [ CLOUD_SATELLITE ]</span>
                     </div>
                 </div>
 
@@ -336,35 +253,21 @@ try {
     </div>
 
     <script>
-        // =========================================
-        // [ SPLASH SCREEN ENGINE V.2 (PATCHED) ]
-        // =========================================
         document.addEventListener("DOMContentLoaded", () => {
             const splash = document.getElementById('splash-overlay');
             const splashContent = splash.querySelector('.splash-content');
 
-            // 1. BOOT SEQUENCE (Saat baru masuk ke Dashboard)
-            // Munculkan selama tepat 3000ms (3 detik)
-            setTimeout(() => { 
-                splash.classList.add('splash-hidden'); 
-            }, 3000);
+            setTimeout(() => { splash.classList.add('splash-hidden'); }, 3000);
 
-            // 2. ROUTING SEQUENCE (Saat mengeklik tombol App)
             const appLinks = document.querySelectorAll('.app-link');
             appLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
-                    e.preventDefault(); // Cegah buka tab secara instan
+                    e.preventDefault(); 
                     const targetUrl = this.getAttribute('href');
-                    const isDanger = this.getAttribute('data-danger') === 'true';
-
-                    // Ubah warna sesuai target (Merah untuk Vault, Hijau untuk sisanya)
-                    // Reset class untuk patch warna
-                    splashContent.className = `splash-content ${isDanger ? 'text-danger' : 'text-main'}`;
                     
-                    // Tampilkan kembali layar hitam
+                    splashContent.className = `splash-content text-main`; // Memaksa hijau untuk semua modul
                     splash.classList.remove('splash-hidden');
 
-                    // Selesai 3 detik, buka tab baru dan sembunyikan layar hitam
                     setTimeout(() => { 
                         window.open(targetUrl, '_blank'); 
                         splash.classList.add('splash-hidden'); 
@@ -379,25 +282,19 @@ try {
         const installBtn = document.getElementById('btn-install-pwa');
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            pwaBanner.style.display = 'flex';
+            e.preventDefault(); deferredPrompt = e; pwaBanner.style.display = 'flex';
         });
 
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    pwaBanner.style.display = 'none';
-                }
+                if (outcome === 'accepted') { pwaBanner.style.display = 'none'; }
                 deferredPrompt = null;
             }
         });
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('../sw.js').catch(err => console.log('SW Reg Failed:', err));
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('../sw.js').catch(err => console.log('SW Reg Failed:', err)); }
     </script>
 </body>
 </html>
