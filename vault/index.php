@@ -62,7 +62,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 <h2 class="mb-0 text-main">[ SECURE_VAULT ]</h2>
                 <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE ENCRYPTION ENABLED.</div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-danger">[ RETURN_TO_BUNKER ]</a>
+            <a href="../bunker/dashboard.php" class="btn btn-danger btn-icon" title="Return to Bunker">[ ⬅ ]</a>
         </div>
 
         <div id="pane-setup" class="pane card mb-4 p-4 text-center" style="border-color: var(--text-main);">
@@ -78,7 +78,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <label class="text-muted fs-small mb-1">> GIST_ID</label>
                     <input type="text" id="setup-gist" class="form-control" style="letter-spacing: 1px; padding: 10px 15px;" placeholder="8a7b6c5d4...">
                 </div>
-                <button onclick="saveSetup()" class="btn btn-main btn-block mt-2">[ INJECT_COORDINATES ]</button>
+                <button onclick="saveSetup()" class="btn btn-main btn-block mb-2">[ INJECT_COORDINATES ]</button>
             </div>
         </div>
 
@@ -92,15 +92,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             
             <button onclick="unlockVault()" id="btn-unlock" class="btn btn-main" style="max-width: 400px; width: 100%;">[ DECRYPT_PAYLOAD ]</button>
             
-            <div class="mt-4 border-top pt-4">
+            <div class="mt-4 border-top pt-4 pb-2">
                 <button onclick="purgeSetup()" class="btn btn-danger btn-sm">> PURGE_TERMINAL_LINK</button>
             </div>
         </div>
 
         <div id="pane-vault" class="pane">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <button onclick="lockVault()" class="btn btn-danger btn-sm">[ SECURE & LOCK VAULT ]</button>
-                <button onclick="toggleAddForm()" class="btn btn-main btn-sm">[+ ADD_ENTRY ]</button>
+                <button onclick="lockVault()" class="btn btn-danger btn-sm">[ LOCK_VAULT ]</button>
+                <button onclick="toggleAddForm()" class="btn btn-main btn-icon" title="Add Entry">➕</button>
             </div>
 
             <div id="add-form" class="card p-4 mb-4" style="display: none; border-color: var(--text-main); background: rgba(0,255,65,0.02);">

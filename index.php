@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SYS_NODE: Jeannes Bryan</title>
+    <meta name="google-site-verification" content="E0ICtVu6Sc2hBMPr2c9_D8EwGO2XuTGfVESUSqde2Y8" />
+	<meta name="msvalidate.01" content="69F30B6CF7C799C59DE89EB81E6EE067" />
+	<meta name="yandex-verification" content="56be8ebae84bd731" />
     <meta name="description" content="Entity Tracker. Status: Monitoring the void." />
     <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="assets/npc-icon.svg">
