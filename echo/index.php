@@ -143,13 +143,13 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
                 <?php if ($is_admin): ?>
                 <div class="d-flex gap-2">
                     <?php if (!$is_thread_view && empty($post['expires_at'])): ?>
-                        <button type="button" class="btn btn-dark btn-sm border-secondary py-0" onclick="replyTo(<?= $post['id'] ?>)">[ CHAIN ]</button>
+                        <button type="button" class="btn-icon-main" title="Chain / Reply" onclick="replyTo(<?= $post['id'] ?>)"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path> </svg> </button>
                     <?php endif; ?>
                     <form method="POST" onsubmit="return confirm('WARNING: Purge this signal and its entire chain?');" style="margin:0;">
                         <input type="hidden" name="action" value="delete_post">
                         <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                        <button type="submit" class="btn-danger-text" title="Purge Signal">[ PURGE ]</button>
+                        <button type="submit" class="btn-icon-danger" title="Purge Signal" onclick="return confirm('WARNING: Erase this signal permanently?');"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <polyline points="3 6 5 6 21 6"></polyline> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path> <line x1="10" y1="11" x2="10" y2="17"></line> <line x1="14" y1="11" x2="14" y2="17"></line> </svg> </button>
                     </form>
                 </div>
                 <?php endif; ?>
