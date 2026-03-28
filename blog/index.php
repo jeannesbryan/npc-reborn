@@ -58,7 +58,7 @@ try {
         </div>
 
         <div class="text-center mt-5 mb-5">
-            <a href="../index.php" class="btn btn-dark border-secondary btn-sm">[ <-- CLOSE_ARCHIVE ]</a>
+            <a href="../index.php" class="btn btn-danger btn-sm">[ <-- CLOSE_ARCHIVE ]</a>
         </div>
         
     </div>

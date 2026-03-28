@@ -103,7 +103,7 @@ try {
             </div>
             <form method="POST" style="margin: 0;">
                 <input type="hidden" name="action" value="logout">
-                <button type="submit" class="btn btn-outline-danger" title="Sever Connection" style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; padding: 2px 12px;">[ ➜ ]</button>
+                <button type="submit" class="btn btn-danger btn-icon" title="Sever Connection">[ ➜ ]</button>
             </form>
         </div>
 
@@ -112,7 +112,7 @@ try {
                 <strong class="text-main">> SYS_OPTIMIZATION_AVAILABLE</strong><br>
                 <span class="fs-small text-muted">Install UI to home screen for isolated access.</span>
             </div>
-            <button id="btn-install-pwa" class="btn btn-dark border-secondary btn-sm" style="font-family: 'JetBrains Mono', monospace;">[ INSTALL_MODULE ]</button>
+            <button id="btn-install-pwa" class="btn btn-main btn-sm">[ INSTALL_MODULE ]</button>
         </div>
 
         <?php if (isset($backup_error)): ?>
@@ -126,7 +126,7 @@ try {
                     <h3 class="mb-1 text-main">COMMS: ECHO</h3>
                     <p class="text-muted fs-small mb-3">Shortwave transmission station.</p>
                 </div>
-                <a href="../echo/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
+                <a href="../echo/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -134,7 +134,7 @@ try {
                     <h3 class="mb-1 text-main">ARCHIVE: BLOG</h3>
                     <p class="text-muted fs-small mb-3">Manifesto drafting & data storage.</p>
                 </div>
-                <a href="blog_manager.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
+                <a href="blog_manager.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -142,7 +142,7 @@ try {
                     <h3 class="mb-1 text-main">NAV: INDEX</h3>
                     <p class="text-muted fs-small mb-3">Bookmark and directory cluster.</p>
                 </div>
-                <a href="../index/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
+                <a href="../index/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -150,7 +150,7 @@ try {
                     <h3 class="mb-1 text-main">OP: GRID</h3>
                     <p class="text-muted fs-small mb-3">Logistics and task operation matrix.</p>
                 </div>
-                <a href="../grid/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
+                <a href="../grid/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -158,7 +158,7 @@ try {
                     <h3 class="mb-1 text-main">SECURE: VAULT</h3>
                     <p class="text-muted fs-small mb-3" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
                 </div>
-                <a href="../vault/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
+                <a href="../vault/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -169,7 +169,7 @@ try {
                 <form method="POST" onsubmit="return confirm('WARNING: Initiating full system data download. Proceed?');" style="margin: 0;">
                     <input type="hidden" name="action" value="backup">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                    <button type="submit" class="btn btn-dark btn-block btn-hover-green w-100">> INITIALIZE</button>
+                    <button type="submit" class="btn btn-main btn-block w-100">> INITIALIZE</button>
                 </form>
             </div>
 
@@ -275,7 +275,6 @@ try {
             });
         });
 
-        // PWA Script
         let deferredPrompt;
         const pwaBanner = document.getElementById('pwa-install-banner');
         const installBtn = document.getElementById('btn-install-pwa');

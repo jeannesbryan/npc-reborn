@@ -36,7 +36,7 @@ try {
     }
 } catch (PDOException $e) { }
 
-// Mengambil Data Story Aktif (Volatile Signals)
+// Mengambil Data Story Aktif
 $active_stories = [];
 try {
     $stmt_stories = $pdo->query("SELECT id, created_at, expires_at FROM posts WHERE parent_id IS NULL AND expires_at IS NOT NULL AND expires_at > datetime('now', 'localtime') ORDER BY created_at DESC");
@@ -143,13 +143,25 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
                 <?php if ($is_admin): ?>
                 <div class="d-flex gap-2">
                     <?php if (!$is_thread_view && empty($post['expires_at'])): ?>
-                        <button type="button" class="btn-icon-main" title="Chain / Reply" onclick="replyTo(<?= $post['id'] ?>)"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path> </svg> </button>
+                        <button type="button" class="btn btn-main btn-icon" title="Chain / Reply" onclick="replyTo(<?= $post['id'] ?>)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                        </button>
                     <?php endif; ?>
                     <form method="POST" onsubmit="return confirm('WARNING: Purge this signal and its entire chain?');" style="margin:0;">
                         <input type="hidden" name="action" value="delete_post">
                         <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                        <button type="submit" class="btn-icon-danger" title="Purge Signal" onclick="return confirm('WARNING: Erase this signal permanently?');"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <polyline points="3 6 5 6 21 6"></polyline> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path> <line x1="10" y1="11" x2="10" y2="17"></line> <line x1="14" y1="11" x2="14" y2="17"></line> </svg> </button>
+                        <button type="submit" class="btn btn-danger btn-icon" title="Purge Signal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
                     </form>
                 </div>
                 <?php endif; ?>
@@ -184,54 +196,42 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
             <?php endif; ?>
 
             <?php if ($child_count > 0 && !$is_thread_view): ?>
-                <button class="btn btn-dark border-secondary btn-sm w-100 mt-3" onclick="viewThread(<?= $post['id'] ?>)">&#x21B3; [ DECRYPT <?= $child_count ?> LINKED SIGNALS ]</button>
+                <button class="btn btn-main btn-sm btn-block mt-3" onclick="viewThread(<?= $post['id'] ?>)">&#x21B3; [ DECRYPT <?= $child_count ?> LINKED SIGNALS ]</button>
             <?php endif; ?>
         </div>
     </div>
     <?php
 }
 
-// Endpoint AJAX: Utas (Thread)
 if (isset($_GET['ajax_thread']) && $_GET['ajax_thread'] == '1') {
     $parent_id = (int)$_GET['parent_id'];
-    $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ?");
-    $stmt->execute([$parent_id]);
+    $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ?"); $stmt->execute([$parent_id]);
     $parent_post = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    $stmt = $pdo->prepare("SELECT * FROM posts WHERE parent_id = ? ORDER BY created_at ASC");
-    $stmt->execute([$parent_id]);
+    $stmt = $pdo->prepare("SELECT * FROM posts WHERE parent_id = ? ORDER BY created_at ASC"); $stmt->execute([$parent_id]);
     $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo "<div class='thread-container p-2'>";
     if ($parent_post) render_echo_card($parent_post, $pdo, $is_admin, true);
     foreach ($children as $child) { render_echo_card($child, $pdo, $is_admin, true); }
-    echo "</div>";
-    exit;
+    echo "</div>"; exit;
 }
 
-// Endpoint AJAX: Membuka Story Modal
 if (isset($_GET['ajax_story']) && $_GET['ajax_story'] == '1') {
     $story_id = (int)$_GET['story_id'];
-    $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ?");
-    $stmt->execute([$story_id]);
+    $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ?"); $stmt->execute([$story_id]);
     $story = $stmt->fetch(PDO::FETCH_ASSOC);
 
     echo "<div class='thread-container p-2'>";
-    if ($story) {
-        render_echo_card($story, $pdo, $is_admin, true);
-    } else {
-        echo "<div class='text-danger text-center py-5'>> SYS_ERR: SIGNAL DECAYED OR PURGED.</div>";
-    }
-    echo "</div>";
-    exit;
+    if ($story) { render_echo_card($story, $pdo, $is_admin, true); } 
+    else { echo "<div class='text-danger text-center py-5'>> SYS_ERR: SIGNAL DECAYED OR PURGED.</div>"; }
+    echo "</div>"; exit;
 }
 
-// Endpoint AJAX: Linimasa Utama
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
     $stmt = $pdo->prepare("SELECT * FROM posts WHERE parent_id IS NULL AND expires_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET :offset");
-    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    $stmt->execute();
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT); $stmt->execute();
     $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (count($posts) === 0) { echo "END"; exit; }
@@ -258,8 +258,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         .story-radar-container { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 4px; scrollbar-width: thin; }
         .story-box { border: 1px solid var(--danger); background: rgba(255,0,60,0.05); color: var(--danger); padding: 10px 15px; cursor: pointer; transition: 0.2s; min-width: 140px; text-align: center; white-space: nowrap; flex-shrink: 0; }
         .story-box:hover { background: var(--danger); color: var(--bg-dark); box-shadow: 0 0 10px var(--danger); }
-        
         .story-modal-dialog { border-color: var(--danger) !important; box-shadow: 0 0 15px rgba(255,0,60,0.2) !important; }
+        
+        .btn-close-text { background: none; border: none; color: var(--danger); font-size: 2rem; line-height: 1; cursor: pointer; text-shadow: 0 0 5px var(--danger); padding: 0; }
     </style>
 </head>
 <body>
@@ -285,6 +286,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         <?php else: ?>
         <hr class="mt-2 mb-3">
         <?php endif; ?>
+
         <?php if ($is_admin): ?>
         <form method="POST" enctype="multipart/form-data" class="mb-4 card p-3" id="echo-form">
             <input type="hidden" name="action" value="add_post">
@@ -293,7 +295,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             
             <div id="chain-indicator" class="alert-bunker p-2 mb-3 d-none d-flex justify-content-between align-items-center" style="border-color: var(--text-main); color: var(--text-main); background: rgba(0,255,65,0.05);">
                 <span class="fs-small">> ESTABLISHING SIGNAL CHAIN...</span>
-                <button type="button" class="btn-danger-text p-0 m-0" onclick="cancelReply()">[ ABORT ]</button>
+                <button type="button" class="btn btn-danger btn-sm p-1" onclick="cancelReply()">[ ABORT ]</button>
             </div>
 
             <div class="form-group">
@@ -311,7 +313,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             </div>
 
             <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-light" id="btn-transmit">[ EXECUTE_BROADCAST ]</button>
+                <button type="submit" class="btn btn-main" id="btn-transmit">[ EXECUTE_BROADCAST ]</button>
             </div>
         </form>
         <hr class="mb-4">
@@ -320,7 +322,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         <div id="echo-container"></div>
 
         <div class="mb-4 text-center d-none" id="load-more-container">
-            <button class="btn btn-dark btn-block border-secondary" type="button" id="btn-load-more" onclick="loadPosts()">[ SCAN_FOR_OLDER_SIGNALS ]</button>
+            <button class="btn btn-main btn-block" type="button" id="btn-load-more" onclick="loadPosts()">[ SCAN_FOR_OLDER_SIGNALS ]</button>
         </div>
         
         <div class="text-center mt-4 text-muted d-none mb-5" id="end-indicator" style="font-size: 0.85rem; letter-spacing: 1px;">
@@ -340,7 +342,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         <div class="thread-modal-dialog" id="threadModalBox">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" id="threadModalHeader">
                 <h3 class="mb-0 text-main" id="threadModalTitle">> SIGNAL_CHAIN</h3>
-                <button class="btn-danger-text" style="font-size: 2rem; line-height: 1;" id="closeThreadBtn" title="Close">&times;</button>
+                <button class="btn-close-text" id="closeThreadBtn" title="Close">&times;</button>
             </div>
             <div id="threadModalContent"></div>
         </div>

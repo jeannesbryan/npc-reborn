@@ -65,27 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .terminal-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
         .terminal-input { background: transparent; border: none; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: 'JetBrains Mono', monospace; width: 100%; padding: 8px 0; margin-bottom: 20px; outline: none; border-radius: 0; }
         .terminal-input:focus { border-bottom-color: var(--text-main); box-shadow: none; }
-        
-        /* Tombol Utama */
-        .terminal-btn { background: var(--text-main); color: var(--bg-dark); border: none; width: 100%; padding: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
-        .terminal-btn:hover { background: var(--text-muted); }
-        
         .sys-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 20px; border-left: 2px solid var(--danger); padding-left: 10px; background: rgba(255, 107, 107, 0.1); padding: 10px; }
-
-        /* Banner PWA */
-        #pwa-install-banner {
-            display: none; background: rgba(0,255,65,0.05); border: 1px dashed var(--text-main); 
-            padding: 15px; margin-top: 20px; align-items: center; justify-content: space-between; 
-            width: 90%; max-width: 400px; box-shadow: 0 0 15px rgba(0,255,65,0.05);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* [ PATCH ]: Tombol Install PWA dengan efek hover yang sama seperti terminal-btn */
-        #btn-install-pwa { 
-            background: var(--text-main); color: var(--bg-dark); border: none; padding: 5px 15px; 
-            font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'JetBrains Mono', monospace; 
-        }
-        #btn-install-pwa:hover { background: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -111,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="email" name="operator_id" class="terminal-input" required autofocus autocomplete="off" spellcheck="false">
             <label class="terminal-label">>> Decryption_Cipher</label>
             <input type="password" name="cipher" class="terminal-input" required autocomplete="off">
-            <button type="submit" class="terminal-btn">[ INITIATE UPLINK ]</button>
+            <button type="submit" class="btn btn-main btn-block mt-3">[ INITIATE UPLINK ]</button>
         </form>
 
         <div class="text-center mt-4 fs-small" style="color: #444;">UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED</div>
@@ -122,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <strong class="text-main" style="letter-spacing: 1px;">> INSTALL_BUNKER_OS</strong><br>
             <span class="fs-small text-muted" style="font-size: 0.75rem;">Add to home screen for native access.</span>
         </div>
-        <button id="btn-install-pwa">INSTALL</button>
+        <button id="btn-install-pwa" class="btn btn-main btn-sm">INSTALL</button>
     </div>
 
     <script>

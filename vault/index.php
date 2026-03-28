@@ -39,7 +39,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         .copy-target { cursor: copy; transition: 0.2s; padding: 2px 5px; border-radius: 3px; }
         .copy-target:hover { background: rgba(0,255,65,0.1); color: var(--text-main) !important; text-shadow: 0 0 5px var(--text-main); }
 
-        .card-padded { padding: 30px !important; }
         .form-control { box-sizing: border-box; }
         
         #password-fields, #edit-password-fields { display: none; margin-top: 15px; }
@@ -63,10 +62,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 <h2 class="mb-0 text-main">[ SECURE_VAULT ]</h2>
                 <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE ENCRYPTION ENABLED.</div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-dark border-secondary">[ RETURN_TO_BUNKER ]</a>
+            <a href="../bunker/dashboard.php" class="btn btn-danger">[ RETURN_TO_BUNKER ]</a>
         </div>
 
-        <div id="pane-setup" class="pane card card-padded mb-4 text-center" style="border-color: var(--text-main);">
+        <div id="pane-setup" class="pane card mb-4 p-4 text-center" style="border-color: var(--text-main);">
             <h3 class="text-main mb-3">> PROTOCOL: COLD START</h3>
             <p class="text-muted fs-small mb-4">Unrecognized terminal. Inject GitHub coordinates to establish secure connection.</p>
             
@@ -79,11 +78,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <label class="text-muted fs-small mb-1">> GIST_ID</label>
                     <input type="text" id="setup-gist" class="form-control" style="letter-spacing: 1px; padding: 10px 15px;" placeholder="8a7b6c5d4...">
                 </div>
-                <button onclick="saveSetup()" class="btn btn-light w-100 mt-2" style="padding: 10px;">[ INJECT_COORDINATES ]</button>
+                <button onclick="saveSetup()" class="btn btn-main btn-block mt-2">[ INJECT_COORDINATES ]</button>
             </div>
         </div>
 
-        <div id="pane-unlock" class="pane card card-padded mb-4 text-center" style="border-color: var(--text-main);">
+        <div id="pane-unlock" class="pane card mb-4 p-4 text-center" style="border-color: var(--text-main);">
             <h3 class="mb-3 text-main">> VAULT LOCKED</h3>
             <p class="text-muted fs-small mb-4">Terminal linked. Awaiting Master Decryption Key.</p>
             
@@ -91,20 +90,20 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 <input type="password" id="master-password" class="form-control text-main border-secondary" style="text-align: center; letter-spacing: 2px; font-weight: bold; width: 100%; padding: 10px 15px;" placeholder="ENTER MASTER PASSWORD..." onkeypress="if(event.key === 'Enter') unlockVault()">
             </div>
             
-            <button onclick="unlockVault()" id="btn-unlock" class="btn btn-light" style="max-width: 400px; width: 100%; margin: 0 auto; display: block; padding: 10px;">[ DECRYPT_PAYLOAD ]</button>
+            <button onclick="unlockVault()" id="btn-unlock" class="btn btn-main" style="max-width: 400px; width: 100%;">[ DECRYPT_PAYLOAD ]</button>
             
             <div class="mt-4 border-top pt-4">
-                <button onclick="purgeSetup()" class="btn btn-dark btn-sm text-muted border-secondary">> PURGE_TERMINAL_LINK</button>
+                <button onclick="purgeSetup()" class="btn btn-danger btn-sm">> PURGE_TERMINAL_LINK</button>
             </div>
         </div>
 
         <div id="pane-vault" class="pane">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <button onclick="lockVault()" class="btn btn-outline-danger btn-sm">[ SECURE & LOCK VAULT ]</button>
-                <button onclick="toggleAddForm()" class="btn btn-light btn-sm">[+ ADD_ENTRY ]</button>
+                <button onclick="lockVault()" class="btn btn-danger btn-sm">[ SECURE & LOCK VAULT ]</button>
+                <button onclick="toggleAddForm()" class="btn btn-main btn-sm">[+ ADD_ENTRY ]</button>
             </div>
 
-            <div id="add-form" class="card card-padded mb-4" style="display: none; border-color: var(--text-main); background: rgba(0,255,65,0.02);">
+            <div id="add-form" class="card p-4 mb-4" style="display: none; border-color: var(--text-main); background: rgba(0,255,65,0.02);">
                 <div class="d-flex gap-3 mb-3" style="flex-wrap: wrap;">
                     <select id="entry-type" class="form-control" style="width: 150px; padding: 10px;" onchange="toggleFormMode()">
                         <option value="NOTE">NOTE</option>
@@ -122,7 +121,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 </div>
 
                 <textarea id="entry-content" class="form-control mb-4" rows="4" style="padding: 15px; margin-top: 15px;" placeholder="Notes / Detail payload..."></textarea>
-                <button onclick="saveEntry()" class="btn btn-light w-100" id="btn-save" style="padding: 10px;">[ ENCRYPT & UPLOAD ]</button>
+                <button onclick="saveEntry()" class="btn btn-main btn-block" id="btn-save">[ ENCRYPT & UPLOAD ]</button>
             </div>
 
             <div class="mb-4 d-flex align-items-center gap-2">
@@ -140,7 +139,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <div class="modal-dialog">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                 <h3 class="mb-0 text-main">> MODIFY_PAYLOAD</h3>
-                <button class="btn-danger-text" style="font-size: 1.5rem; line-height: 1;" onclick="closeEditModal()" title="Abort">&times;</button>
             </div>
             
             <input type="hidden" id="edit-id">
@@ -164,8 +162,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             <textarea id="edit-content" class="form-control mb-4" rows="4" style="padding: 15px; margin-top: 15px;" placeholder="Notes / Detail payload..."></textarea>
             
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-dark border-secondary" onclick="closeEditModal()">[ ABORT ]</button>
-                <button onclick="saveEditEntry()" id="btn-edit-save" class="btn btn-light">[ OVERRIDE_PAYLOAD ]</button>
+                <button type="button" class="btn btn-danger" onclick="closeEditModal()">[ ABORT ]</button>
+                <button onclick="saveEditEntry()" id="btn-edit-save" class="btn btn-main">[ OVERRIDE_PAYLOAD ]</button>
             </div>
         </div>
     </div>
@@ -197,14 +195,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             });
         }
 
-        // Toggle form (Add)
         function toggleFormMode() {
             const type = document.getElementById('entry-type').value;
             const passFields = document.getElementById('password-fields');
             passFields.style.display = (type === 'PASSWORD') ? 'block' : 'none';
         }
 
-        // Toggle form (Edit)
         function toggleEditFormMode() {
             const type = document.getElementById('edit-type').value;
             const passFields = document.getElementById('edit-password-fields');
@@ -356,7 +352,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             renderVault();
         }
 
-        // --- EDIT LOGIC ---
         const modal = document.getElementById('editModal');
 
         function openEditModal(id) {
@@ -401,7 +396,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             
             if(!title) { alert("> SYS_ERR: TITLE IS REQUIRED."); return; }
 
-            // Update data
             vaultData[index].type = type;
             vaultData[index].title = title;
             vaultData[index].content = document.getElementById('edit-content').value.trim();
@@ -411,7 +405,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 vaultData[index].url = document.getElementById('edit-url').value.trim();
                 vaultData[index].password = document.getElementById('edit-pass').value.trim();
             } else {
-                // Jika dirubah dari Password ke Note, hapus data credential-nya agar file Gist tetap ringan
                 delete vaultData[index].email;
                 delete vaultData[index].url;
                 delete vaultData[index].password;
@@ -422,7 +415,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             renderVault(document.getElementById('live-search').value);
         }
 
-        // --- DELETE & RENDER LOGIC ---
         async function deleteEntry(id) {
             if(confirm("WARNING: Irrevocably destroy this payload?")) {
                 vaultData = vaultData.filter(i => i.id !== id);
@@ -435,12 +427,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const contentDiv = document.getElementById('content-' + id);
             const isCurrentlyOpen = contentDiv.style.display === 'block';
 
-            // Tutup semua laci brankas yang sedang terbuka
             document.querySelectorAll('.item-content').forEach(el => {
                 el.style.display = 'none';
             });
 
-            // Jika laci yang diklik sebelumnya tertutup, maka buka
             if (!isCurrentlyOpen) {
                 contentDiv.style.display = 'block';
             }
@@ -498,8 +488,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                             ${notesHtml}
                         </div>
                         <div class="d-flex justify-content-end gap-2">
-                            <button onclick="openEditModal(${item.id})" class="btn-dark border-secondary text-main btn-sm hover-light">[ EDIT ]</button>
-                            <button onclick="deleteEntry(${item.id})" class="btn-dark border-secondary text-muted btn-sm hover-danger">[ PURGE ]</button>
+                            <button onclick="openEditModal(${item.id})" class="btn btn-main btn-sm">[ EDIT ]</button>
+                            <button onclick="deleteEntry(${item.id})" class="btn btn-danger btn-sm">[ PURGE ]</button>
                         </div>
                     </div>
                 `;
@@ -507,7 +497,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             });
         }
 
-        // INIT
         updateUI();
     </script>
 </body>

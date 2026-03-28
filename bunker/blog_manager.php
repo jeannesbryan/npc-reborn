@@ -112,7 +112,7 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
                 <h2 class="mb-0">Blog Manager</h2>
                 <div class="text-muted fs-small">> DRAFTING_MANIFESTO. (MARKDOWN SUPPORTED)</div>
             </div>
-            <a href="dashboard.php" class="btn btn-outline-danger">[ <-- RETURN TO CONTROL ]</a>
+            <a href="dashboard.php" class="btn btn-danger">[ <-- RETURN TO CONTROL ]</a>
         </div>
 
         <div class="d-flex gap-3 flex-wrap align-items-start">
@@ -144,7 +144,7 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
                             <option value="PUBLISHED" <?= $edit_data['status'] === 'PUBLISHED' ? 'selected' : '' ?>>PUBLISHED</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-light w-100" id="btn-submit-post">[ SAVE TRANSMISSION ]</button>
+                    <button type="submit" class="btn btn-main btn-block" id="btn-submit-post">[ SAVE TRANSMISSION ]</button>
                 </form>
             </div>
 
@@ -154,7 +154,7 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
                     <p class="text-muted fs-small mb-2">Select multiple files. Upload process runs in the background.</p>
                     
                     <input type="file" id="media-input" class="form-control text-muted fs-small mb-2" multiple accept="image/*, video/*">
-                    <button type="button" id="btn-upload" class="btn btn-dark w-100 border-secondary">[ UPLOAD & OBTAIN URL ]</button>
+                    <button type="button" id="btn-upload" class="btn btn-main btn-block">[ UPLOAD & OBTAIN URL ]</button>
                     
                     <div id="upload-results" class="mt-2"></div>
                 </div>
@@ -162,20 +162,14 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
                 <div class="card p-3">
                     <h4 class="mb-3">Archive Registry</h4>
                     <?php foreach ($articles as $art): ?>
-                        <div class="border-bottom pb-2 mb-2">
-                            <div class="fw-bold fs-small"><?= htmlspecialchars($art['title']) ?></div>
-                            <div class="text-muted fs-small mb-1">
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="fw-bold fs-small mb-1"><?= htmlspecialchars($art['title']) ?></div>
+                            <div class="text-muted fs-small mb-2">
                                 [<?= $art['status'] ?>] - <?= date('d M Y', strtotime($art['created_at'])) ?>
                                 <span class="text-success ml-1">(&#x2299; <?= number_format($art['views'] ?? 0) ?> HITS)</span>
                             </div>
                             <div class="d-flex gap-2">
-                                <a href="?edit=<?= $art['id'] ?>" class="text-success fs-small">[ EDIT ]</a>
-                                <form method="POST" onsubmit="return confirm('WARNING: Purge this data permanently?');" style="margin:0;">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="id" value="<?= $art['id'] ?>">
-                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                    <button type="submit" class="btn-danger-text fs-small p-0">[ PURGE ]</button>
-                                </form>
+                                <a href="?edit=<?= $art['id'] ?>" class="btn btn-main btn-sm">[ EDIT ]</a>
                                 <?php if ($art['status'] === 'PUBLISHED'): ?>
                                     <?php 
                                         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
@@ -184,8 +178,14 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
                                         if ($base_dir === '/' || $base_dir === '\\') { $base_dir = ''; }
                                         $article_url = $protocol . "://" . $host . $base_dir . "/blog/" . htmlspecialchars($art['slug']);
                                     ?>
-                                    <a href="<?= $article_url ?>" target="_blank" class="text-muted fs-small">[ VIEW ]</a>
+                                    <a href="<?= $article_url ?>" target="_blank" class="btn btn-main btn-sm">[ VIEW ]</a>
                                 <?php endif; ?>
+                                <form method="POST" onsubmit="return confirm('WARNING: Purge this data permanently?');" style="margin:0;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?= $art['id'] ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm">[ PURGE ]</button>
+                                </form>
                             </div>
                         </div>
                     <?php endforeach; ?>

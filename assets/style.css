@@ -23,25 +23,16 @@
 
 body {
     font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    margin: 0;
-    line-height: 1.5;
+    background-color: var(--bg-dark); color: var(--text-main); margin: 0; line-height: 1.5;
     background-image: radial-gradient(circle, #0f0f0f 1px, transparent 1px);
-    background-size: 30px 30px;
-    position: relative;
+    background-size: 30px 30px; position: relative;
 }
 
 /* Efek Layar CRT (Scanlines) */
 body::after {
-    content: " ";
-    display: block;
-    position: fixed;
-    top: 0; left: 0; bottom: 0; right: 0;
+    content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
     background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    z-index: 9999;
-    background-size: 100% 2px, 3px 100%;
-    pointer-events: none; 
+    z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none; 
 }
 
 /* Layout & Utilities */
@@ -82,53 +73,19 @@ a:hover { color: var(--text-main); text-shadow: 0 0 8px var(--text-main); }
 .border-bottom { border-bottom: 1px dashed var(--border-color) !important; }
 hr { border: 0; border-top: 1px dashed var(--border-color); margin: 1.5rem 0; }
 
-.card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 0; 
-    box-shadow: inset 0 0 10px rgba(0, 143, 17, 0.1);
-    position: relative;
-}
+.card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 0; box-shadow: inset 0 0 10px rgba(0, 143, 17, 0.1); position: relative; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--text-muted); }
 
 /* Filter Retro untuk Foto/Avatar */
-.avatar {
-    border-radius: 0;
-    border: 1px solid var(--border-color);
-    object-fit: cover;
-    filter: grayscale(100%) contrast(1.2) sepia(100%) hue-rotate(70deg) saturate(500%);
-}
+.avatar { border-radius: 0; border: 1px solid var(--border-color); object-fit: cover; filter: grayscale(100%) contrast(1.2) sepia(100%) hue-rotate(70deg) saturate(500%); }
 .avatar-main { width: 120px; height: 120px; border-radius: 0; border: 2px solid var(--border-color); object-fit: cover; margin-bottom: 20px; filter: grayscale(100%) contrast(1.2) sepia(100%) hue-rotate(70deg) saturate(500%); }
 
-/* Forms & Buttons */
+/* Forms */
 .form-group { margin-bottom: 1rem; }
 .form-label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem; }
-.form-control {
-    width: 100%; padding: 0.5rem 0.75rem;
-    background-color: rgba(0, 255, 65, 0.02);
-    border: 1px solid var(--text-muted);
-    color: var(--text-main);
-    border-radius: 0; font-family: inherit;
-}
+.form-control { width: 100%; padding: 0.5rem 0.75rem; background-color: rgba(0, 255, 65, 0.02); border: 1px solid var(--text-muted); color: var(--text-main); border-radius: 0; font-family: inherit; }
 .form-control:focus { outline: none; border-color: var(--text-main); box-shadow: 0 0 5px rgba(0, 255, 65, 0.3); }
 textarea.form-control { resize: vertical; min-height: 80px; }
-
-/* [ PATCH ]: Memaksa semua tombol agar teksnya sejajar satu baris */
-.btn, .btn-sm, .btn-outline-danger, .btn-dark, .btn-light {
-    display: inline-block; padding: 0.375rem 0.75rem; font-family: inherit; font-size: 0.9rem;
-    cursor: pointer; border-radius: 0; text-align: center; border: 1px solid transparent; transition: 0.2s;
-    text-transform: uppercase; font-weight: bold; letter-spacing: 1px;
-    white-space: nowrap;
-}
-.btn-block { display: block; width: 100%; }
-.btn-light { background-color: var(--text-main); color: var(--bg-dark); border: 1px solid var(--text-main); }
-.btn-light:hover { background-color: transparent; color: var(--text-main); }
-/* [ PATCH ]: Menghapus !important pada border-color */
-.btn-dark { background-color: transparent; color: var(--text-main); border-color: var(--border-color); }
-.btn-dark:hover { background-color: var(--text-muted); color: var(--bg-dark); }
-.btn-outline-danger { background-color: transparent; color: var(--danger); border-color: var(--danger); }
-.btn-outline-danger:hover { background-color: var(--danger); color: var(--bg-dark); box-shadow: 0 0 8px var(--danger); }
-.btn-danger-text { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 5px; text-transform: uppercase; }
 
 /* Table */
 .table-responsive { overflow-x: auto; }
@@ -159,109 +116,79 @@ th { color: var(--text-muted); text-transform: uppercase; background: rgba(0, 14
 .btn-close-modal { position: absolute; top: -40px; right: 0; background: none; border: none; color: var(--danger); font-size: 2.5rem; cursor: pointer; text-shadow: 0 0 5px var(--danger); }
 .zoomable-image { cursor: crosshair; }
 
-/* ========================================= */
-/* GLOBAL REUSABLE COMPONENTS                */
-/* ========================================= */
-
-/* 1. Splash Screen Engine */
+/* Splash Screen Engine */
 #splash-overlay { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: var(--bg-dark, #050505); z-index: 99999; 
-    display: flex; align-items: center; justify-content: center; 
-    text-align: center; transition: opacity 0.5s ease; 
-    background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-    background-size: 30px 30px;
-    font-family: 'JetBrains Mono', monospace;
-    padding: 20px; 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark, #050505); z-index: 99999; 
+    display: flex; align-items: center; justify-content: center; text-align: center; transition: opacity 0.5s ease; 
+    background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px;
+    font-family: 'JetBrains Mono', monospace; padding: 20px; 
 }
-.splash-content { 
-    font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; 
-    font-weight: bold; color: var(--text-main); 
-    max-width: 95%; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; 
-}
+.splash-content { font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; font-weight: bold; color: var(--text-main); max-width: 95%; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; }
 @media (max-width: 480px) { .splash-content { font-size: 0.9rem; letter-spacing: 1px; } }
 .splash-hidden { opacity: 0; pointer-events: none; }
-
 .loading-dots::after { content: ''; animation: dots 1.5s infinite; }
 @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
 
-/* 2. PWA Install Banner */
-#pwa-install-banner {
-    display: none; background: rgba(0,255,65,0.05); border: 1px dashed var(--text-main); 
-    padding: 15px; margin-top: 20px; margin-bottom: 20px; align-items: center; justify-content: space-between; 
-    width: 90%; max-width: 400px; box-shadow: 0 0 15px rgba(0,255,65,0.05);
-    font-family: 'JetBrains Mono', monospace; margin-left: auto; margin-right: auto;
-}
+/* PWA Install Banner */
+#pwa-install-banner { display: none; background: rgba(0,255,65,0.05); border: 1px dashed var(--text-main); padding: 15px; margin-top: 20px; margin-bottom: 20px; align-items: center; justify-content: space-between; width: 90%; max-width: 400px; box-shadow: 0 0 15px rgba(0,255,65,0.05); font-family: 'JetBrains Mono', monospace; margin-left: auto; margin-right: auto; }
 
-/* 3. Core UI Animations & Utils */
-.status-indicator { 
-    display: inline-block; width: 10px; height: 10px; background: var(--text-main); 
-    border-radius: 50%; box-shadow: 0 0 10px var(--text-main); margin-right: 8px; 
-    animation: pulse 2s infinite; 
-}
+/* Pulse Indicator */
+.status-indicator { display: inline-block; width: 10px; height: 10px; background: var(--text-main); border-radius: 50%; box-shadow: 0 0 10px var(--text-main); margin-right: 8px; animation: pulse 2s infinite; }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-/* [ PATCH ]: Menggabungkan .btn agar spesifisitas hierarkinya menang tanpa !important */
-.btn.btn-hover-green { transition: 0.3s; }
-.btn.btn-hover-green:hover { 
-    background-color: var(--text-main); color: var(--bg-dark); 
-    border-color: var(--text-main); box-shadow: 0 0 15px rgba(0,255,65,0.3); 
-}
+/* ========================================= */
+/* UNIVERSAL BUTTON SYSTEM (V4 - FOOLPROOF)  */
+/* ========================================= */
 
-/* ========================================= */
-/* MEDIA QUERIES UNTUK PONSEL                */
-/* ========================================= */
+/* Reset gaya bawaan browser dan proteksi tag <a> */
+button.btn, a.btn, input.btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+    cursor: pointer; border-radius: 0; text-align: center; transition: all 0.2s ease-in-out;
+    text-transform: uppercase; font-weight: bold; letter-spacing: 1px;
+    white-space: nowrap; line-height: 1.2; text-decoration: none;
+}
+.btn-block { width: 100%; display: flex; }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn-icon { padding: 6px 10px; font-size: 1.2rem; }
+
+/* Tombol Utama (Hijau) */
+button.btn-main, a.btn-main {
+    background-color: var(--bg-dark); /* Latar Hitam */
+    border: 1px solid var(--text-main); /* Garis Hijau */
+    color: var(--text-main); /* Teks Hijau */
+}
+button.btn-main:hover, a.btn-main:hover {
+    background-color: var(--text-main); /* Latar Hijau */
+    color: var(--bg-dark); /* Teks Hitam */
+    border-color: var(--text-main);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+}
+/* Transisi warna Ikon SVG */
+button.btn-main svg, a.btn-main svg { stroke: var(--text-main); fill: none; transition: 0.2s; }
+button.btn-main:hover svg, a.btn-main:hover svg { stroke: var(--bg-dark); }
+
+/* Tombol Danger (Merah) */
+button.btn-danger, a.btn-danger {
+    background-color: var(--bg-dark); /* Latar Hitam */
+    border: 1px solid var(--danger); /* Garis Merah */
+    color: var(--danger); /* Teks Merah */
+}
+button.btn-danger:hover, a.btn-danger:hover {
+    background-color: var(--danger); /* Latar Merah */
+    color: var(--bg-dark); /* Teks Hitam */
+    border-color: var(--danger);
+    box-shadow: 0 0 15px rgba(255, 0, 60, 0.4);
+}
+/* Transisi warna Ikon SVG */
+button.btn-danger svg, a.btn-danger svg { stroke: var(--danger); fill: none; transition: 0.2s; }
+button.btn-danger:hover svg, a.btn-danger:hover svg { stroke: var(--bg-dark); }
+
+/* Responsivitas Layar HP */
 @media (max-width: 480px) {
-    .btn, .btn-sm, .btn-outline-danger, .btn-dark, .btn-light {
-        font-size: 0.75rem; /* Mengecilkan ukuran teks sekitar 25% */
-        padding: 6px 10px;  /* Mengurangi ruang kosong di dalam tombol */
-    }
-}
-
-/* ========================================= */
-/* ICON BUTTONS (ECHO & MODULES)             */
-/* ========================================= */
-.btn-icon-danger {
-    background: transparent;
-    border: 1px solid var(--danger);
-    color: var(--danger);
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-
-.btn-icon-danger:hover {
-    background: var(--danger);
-    color: var(--bg-dark);
-    box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
-}
-
-.btn-icon-main {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-
-/* [ PATCH ]: Menghapus seluruh !important */
-.btn-icon-main:hover {
-    background-color: var(--text-main); 
-    color: var(--bg-dark);              
-    border-color: var(--text-main);     
-    box-shadow: 0 0 15px rgba(0, 255, 65, 0.4); 
-}
-
-/* [ PATCH ]: Menambahkan transisi SVG agar warna Ikon rantai tidak berkedip */
-.btn-icon-main svg, .btn-icon-danger svg {
-    transition: stroke 0.2s ease, fill 0.2s ease;
+    button.btn, a.btn { font-size: 0.75rem; padding: 8px 15px; }
+    button.btn-sm, a.btn-sm { font-size: 0.7rem; padding: 4px 8px; }
+    button.btn-icon, a.btn-icon { padding: 4px 8px; font-size: 1.1rem; }
 }

@@ -105,11 +105,6 @@ foreach ($all_bookmarks as $bm) {
         .bookmark-link::before { content: '[>] '; opacity: 0.7; }
         
         .action-btns { display: flex; gap: 8px; flex-shrink: 0; }
-        .btn-mini { background: none; border: none; font-size: 0.8rem; cursor: pointer; transition: 0.2s; padding: 0; }
-        .btn-mini.edit { color: var(--text-main); opacity: 0.6; }
-        .btn-mini.edit:hover { opacity: 1; text-shadow: 0 0 5px var(--text-main); }
-        .btn-mini.del { color: var(--danger); opacity: 0.5; }
-        .btn-mini.del:hover { opacity: 1; text-shadow: 0 0 5px var(--danger); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: 0.2s; backdrop-filter: blur(3px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
@@ -129,7 +124,7 @@ foreach ($all_bookmarks as $bm) {
                 <h2 class="mb-0 text-main">[ NAV: INDEX_DIRECTORIES ]</h2>
                 <div class="text-muted fs-small mt-1">> STATUS: MEMORY BANK ACCESSED... <span class="blinking-cursor"></span></div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-dark border-secondary">[ RETURN_TO_BUNKER ]</a>
+            <a href="../bunker/dashboard.php" class="btn btn-danger">[ RETURN_TO_BUNKER ]</a>
         </div>
 
         <div class="card p-3 mb-4">
@@ -154,7 +149,7 @@ foreach ($all_bookmarks as $bm) {
                         </datalist>
                     </div>
                     <div>
-                        <button type="submit" class="btn btn-light w-100">[ INJECT ]</button>
+                        <button type="submit" class="btn btn-main btn-block">[ INJECT ]</button>
                     </div>
                 </div>
             </form>
@@ -181,7 +176,7 @@ foreach ($all_bookmarks as $bm) {
                                     <?= htmlspecialchars($bm['title']) ?>
                                 </a>
                                 <div class="action-btns">
-                                    <button type="button" class="btn-mini edit" 
+                                    <button type="button" class="btn btn-main btn-sm" 
                                         data-id="<?= $bm['id'] ?>" 
                                         data-title="<?= htmlspecialchars($bm['title']) ?>" 
                                         data-url="<?= htmlspecialchars($bm['url']) ?>" 
@@ -192,7 +187,7 @@ foreach ($all_bookmarks as $bm) {
                                         <input type="hidden" name="action" value="delete_bookmark">
                                         <input type="hidden" name="id" value="<?= $bm['id'] ?>">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                        <button type="submit" class="btn-mini del" title="Purge Link">[X]</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Purge Link">[X]</button>
                                     </form>
                                 </div>
                             </div>
@@ -219,7 +214,6 @@ foreach ($all_bookmarks as $bm) {
         <div class="modal-dialog">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                 <h3 class="mb-0 text-main">> MODIFY_COORDINATES</h3>
-                <button class="btn-danger-text" style="font-size: 1.5rem; line-height: 1;" onclick="closeEditModal()" title="Abort">&times;</button>
             </div>
             <form method="POST" style="margin: 0;">
                 <input type="hidden" name="action" value="edit_bookmark">
@@ -245,15 +239,14 @@ foreach ($all_bookmarks as $bm) {
                 </div>
                 
                 <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-dark border-secondary" onclick="closeEditModal()">[ ABORT ]</button>
-                    <button type="submit" class="btn btn-light">[ EXECUTE_OVERRIDE ]</button>
+                    <button type="button" class="btn btn-danger" onclick="closeEditModal()">[ ABORT ]</button>
+                    <button type="submit" class="btn btn-main">[ EXECUTE_OVERRIDE ]</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // --- LOGIKA LIVE SEARCH ---
         const searchInput = document.getElementById('live-search');
         if (searchInput) {
             searchInput.addEventListener('input', function() {
@@ -271,7 +264,6 @@ foreach ($all_bookmarks as $bm) {
                         const title = item.querySelector('.bookmark-link').innerText.toLowerCase();
                         const url = item.querySelector('.bookmark-link').getAttribute('href').toLowerCase();
 
-                        // Jika query cocok dengan Judul, URL, ATAU nama Kategorinya
                         if (title.includes(query) || url.includes(query) || categoryName.includes(query)) {
                             item.style.display = 'flex';
                             clusterHasMatch = true;
@@ -281,15 +273,13 @@ foreach ($all_bookmarks as $bm) {
                         }
                     });
 
-                    // Sembunyikan seluruh kotak klaster jika semua isinya tidak cocok
                     if (clusterHasMatch) {
-                        cluster.style.display = 'block';
+                        cluster.style.display = 'inline-block';
                     } else {
                         cluster.style.display = 'none';
                     }
                 });
 
-                // Tampilkan pesan error jika benar-benar tidak ada yang cocok
                 if (totalMatches === 0 && query !== '') {
                     emptyState.classList.remove('d-none');
                 } else {
@@ -298,7 +288,6 @@ foreach ($all_bookmarks as $bm) {
             });
         }
 
-        // --- LOGIKA MODAL EDIT ---
         const modal = document.getElementById('editModal');
 
         function openEditModal(button) {

@@ -13,15 +13,12 @@
         .profile-card { padding: 40px 20px; text-align: center; border-top: 4px solid var(--text-main); }
         .social-area { margin-top: 35px; padding-top: 30px; padding-bottom: 30px; border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); }
         .social-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
-        .social-btn { display: inline-block; padding: 10px 20px; border: 1px solid var(--border-color); color: var(--text-main); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; transition: 0.2s; background: rgba(0, 255, 65, 0.05); }
-        .social-btn:hover { background: var(--text-main); color: var(--bg-dark); box-shadow: 0 0 15px var(--text-main); }
     </style>
 </head>
 <body>
 
     <div id="splash-overlay" class="splash-hidden">
-        <div class="splash-content" id="splash-text">
-            </div>
+        <div class="splash-content" id="splash-text"></div>
     </div>
 
     <div class="container landing-wrapper">
@@ -40,10 +37,10 @@
             <div class="social-area">
                 <div class="text-muted fs-small mb-3">AVAILABLE CHANNELS:</div>
                 <div class="social-links">
-                    <a href="echo/index.php" class="social-btn app-link" title="Echo" data-text="> INTERCEPTING_ORBITAL_SIGNAL_TELEMETRY">
+                    <a href="echo/index.php" class="btn btn-main app-link" title="Echo" data-text="> INTERCEPTING_ORBITAL_SIGNAL_TELEMETRY">
                         [ RECV: ECHO_BROADCAST ]
                     </a>
-                    <a href="mailto:jeannesbryan@duck.com" class="social-btn" title="Email">
+                    <a href="mailto:jeannesbryan@duck.com" class="btn btn-main" title="Email">
                         [ SEND: DIRECT_COMMS ]
                     </a>
                 </div>

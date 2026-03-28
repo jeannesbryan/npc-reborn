@@ -32,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $time = date('Y-m-d H:i:s');
 
-    // 1. TAMBAH SEKTOR
     if ($action === 'add_topic') {
         $name = trim($_POST['topic_name']);
         if (!empty($name)) {
@@ -43,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
     }
-    // 2. EDIT NAMA SEKTOR (FITUR BARU)
     elseif ($action === 'edit_topic') {
         $t_id = $_POST['topic_id'];
         $new_name = trim($_POST['topic_name']);
@@ -54,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         header("Location: index.php?topic=" . $t_id);
         exit;
     }
-    // 3. HAPUS SEKTOR
     elseif ($action === 'delete_topic') {
         $t_id = $_POST['topic_id'];
         $count = $pdo->query("SELECT COUNT(*) FROM topics")->fetchColumn();
@@ -65,19 +62,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         header("Location: index.php");
         exit;
     }
-    // 4. TAMBAH TASK
     elseif ($action === 'add_task') {
         $content = trim($_POST['content']);
         $topic_id = $_POST['topic_id'];
         if (!empty($content)) {
             $stmt = $pdo->prepare("INSERT INTO tasks (content, status, topic_id) VALUES (?, 'PENDING', ?)");
-            // Menghindari double-encoding htmlspecialchars di masa depan, kita simpan secara native
             $stmt->execute([$content, $topic_id]);
         }
         header("Location: index.php?topic=" . $topic_id);
         exit;
     }
-    // 5. EDIT KONTEN TASK (FITUR BARU)
     elseif ($action === 'edit_task') {
         $item_id = $_POST['item_id'];
         $topic_id = $_POST['topic_id'];
@@ -89,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         header("Location: index.php?topic=" . $topic_id);
         exit;
     }
-    // 6. PINDAH STATUS TASK
     elseif ($action === 'move_task') {
         $item_id = $_POST['item_id'];
         $new_status = $_POST['new_status'];
@@ -102,7 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         header("Location: index.php?topic=" . $topic_id);
         exit;
     }
-    // 7. HAPUS TASK
     elseif ($action === 'delete_task') {
         $item_id = $_POST['item_id'];
         $topic_id = $_POST['topic_id'];
@@ -156,8 +148,6 @@ foreach ($tasks as $task) {
         .topic-tab { padding: 8px 15px; border: 1px solid var(--border-color); color: var(--text-muted); text-decoration: none; font-size: 0.85rem; letter-spacing: 1px; transition: 0.3s; background: rgba(0,255,65,0.02); }
         .topic-tab:hover { border-color: var(--text-main); color: var(--text-main); }
         .topic-tab.active { background: var(--text-main); color: var(--bg-dark); border-color: var(--text-main); font-weight: bold; box-shadow: 0 0 10px rgba(0,255,65,0.3); }
-        .topic-add-btn { background: transparent; border: 1px dashed var(--text-muted); cursor: pointer; color: var(--text-muted); }
-        .topic-add-btn:hover { border-color: var(--text-main); color: var(--text-main); }
 
         /* KANBAN GRID */
         .grid-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: start; }
@@ -171,12 +161,6 @@ foreach ($tasks as $task) {
         .task-card.secured { border-left-color: var(--text-muted); opacity: 0.7; text-decoration: line-through; color: var(--text-muted); }
         
         .task-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px dotted var(--border-color); padding-top: 8px; margin-top: 10px; }
-        .btn-move { background: none; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.75rem; padding: 4px 8px; cursor: pointer; transition: 0.2s; font-family: 'JetBrains Mono', monospace;}
-        .btn-move:hover { background: var(--text-main); color: var(--bg-dark); }
-        .btn-del { background: none; border: none; color: var(--danger); font-size: 0.8rem; cursor: pointer; opacity: 0.6; font-family: 'JetBrains Mono', monospace; }
-        .btn-del:hover { opacity: 1; text-shadow: 0 0 5px var(--danger); }
-        .task-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; transition: 0.2s; padding: 0; }
-        .task-btn:hover { color: var(--text-main); text-shadow: 0 0 5px var(--text-main); }
         
         /* FORM INPUT */
         .task-input { background: transparent; border: 1px dashed var(--border-color); color: var(--text-main); width: 100%; padding: 10px; font-family: 'JetBrains Mono', monospace; resize: vertical; outline: none; margin-bottom: 10px; }
@@ -198,7 +182,7 @@ foreach ($tasks as $task) {
                 <h2 class="mb-0 text-main" style="letter-spacing: 2px;">[ OP: GRID ]</h2>
                 <div class="text-muted fs-small mt-1">> LOGISTICS_MATRIX_V2 // <span style="color:var(--text-main);"><?= htmlspecialchars($active_topic_name) ?></span></div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-outline-danger btn-sm" style="font-family: 'JetBrains Mono', monospace;">[ RETURN_TO_BUNKER ]</a>
+            <a href="../bunker/dashboard.php" class="btn btn-danger btn-sm">[ RETURN_TO_BUNKER ]</a>
         </div>
 
         <div class="topic-bar">
@@ -208,13 +192,13 @@ foreach ($tasks as $task) {
                 </a>
             <?php endforeach; ?>
             
-            <button onclick="createNewTopic()" class="topic-tab topic-add-btn">[ + NEW_SECTOR ]</button>
+            <button onclick="createNewTopic()" class="btn btn-main btn-sm">[ + NEW_SECTOR ]</button>
             
             <div style="margin-left: auto; display: flex; gap: 10px;">
-                <button onclick="renameTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="btn btn-dark border-secondary btn-sm" style="font-family: 'JetBrains Mono', monospace;">[ EDIT_SECTOR ]</button>
+                <button onclick="renameTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="btn btn-main btn-sm">[ EDIT_SECTOR ]</button>
                 
                 <?php if (count($topics) > 1): ?>
-                    <button onclick="purgeTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="btn btn-outline-danger btn-sm" style="font-family: 'JetBrains Mono', monospace;">[ PURGE_SECTOR ]</button>
+                    <button onclick="purgeTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="btn btn-danger btn-sm">[ PURGE_SECTOR ]</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -229,18 +213,18 @@ foreach ($tasks as $task) {
                     <input type="hidden" name="topic_id" value="<?= $active_topic_id ?>">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                     <textarea name="content" class="task-input" rows="2" placeholder="> Input new objective..." required></textarea>
-                    <button type="submit" class="btn btn-dark w-100 btn-hover-green" style="font-size: 0.85rem;">[ INJECT_TASK ]</button>
+                    <button type="submit" class="btn btn-main btn-block btn-sm mt-2">[ INJECT_TASK ]</button>
                 </form>
 
                 <?php foreach ($board['PENDING'] as $t): ?>
                     <div class="task-card">
                         <div style="color: var(--text-main);"><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
                         <div class="task-actions">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-del" title="Purge" onclick="return confirm('Erase task?');">[X] PURGE</button></form>
-                                <button type="button" class="task-btn" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-danger btn-sm" title="Purge" onclick="return confirm('Erase task?');">[X] PURGE</button></form>
+                                <button type="button" class="btn btn-main btn-sm" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
                             </div>
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-move" style="color:var(--text-main);">IN_TRANSIT ></button></form>
+                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-sm">IN_TRANSIT ></button></form>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -252,12 +236,12 @@ foreach ($tasks as $task) {
                     <div class="task-card transit">
                         <div style="color: var(--light);"><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
                         <div class="task-actions">
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="PENDING"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-move">< PENDING</button></form>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <button type="button" class="task-btn" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-del" title="Purge">[X]</button></form>
+                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="PENDING"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-sm">< PENDING</button></form>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button type="button" class="btn btn-main btn-sm" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
+                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-danger btn-sm" title="Purge">[X]</button></form>
                             </div>
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="SECURED"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-move" style="color:var(--text-main);">SECURED ></button></form>
+                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="SECURED"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-sm">SECURED ></button></form>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -269,9 +253,9 @@ foreach ($tasks as $task) {
                     <div class="task-card secured">
                         <div><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
                         <div class="task-actions" style="justify-content: flex-start; gap: 15px;">
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-move">< REVERT</button></form>
-                            <button type="button" class="task-btn" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn-del" title="Purge" onclick="return confirm('Erase permanently?');">[X]</button></form>
+                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-sm">< REVERT</button></form>
+                            <button type="button" class="btn btn-main btn-sm" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
+                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-danger btn-sm" title="Purge" onclick="return confirm('Erase permanently?');">[X]</button></form>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -338,7 +322,6 @@ foreach ($tasks as $task) {
                 document.getElementById('actionField').value = 'edit_task';
                 document.getElementById('taskIdField').value = id;
                 document.getElementById('taskContentField').value = newContent;
-                // Kita ambil topic_id aktif dari PHP yang sudah kita simpan di form ini
                 document.getElementById('topicIdField').value = <?= $active_topic_id ?>;
                 document.getElementById('actionForm').submit();
             }

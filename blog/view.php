@@ -10,7 +10,7 @@ try {
     
     if (!$post) {
         header("HTTP/1.0 404 Not Found");
-        die("<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>SYS_ERR</title><link rel='stylesheet' href='../assets/style.css'></head><body style='display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;'><div class='card p-5 border-danger'><h2 class='text-danger mb-3'>SYS_ERR: 404</h2><p class='text-muted mb-4'>> ARCHIVE CORRUPTED OR NOT FOUND.</p><a href='index.php' class='btn btn-outline-danger'>[ <-- RETURN_TO_ARCHIVE ]</a></div></body></html>");
+        die("<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>SYS_ERR</title><link rel='stylesheet' href='../assets/style.css'></head><body style='display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;'><div class='card p-5 border-danger'><h2 class='text-danger mb-3'>SYS_ERR: 404</h2><p class='text-muted mb-4'>> ARCHIVE CORRUPTED OR NOT FOUND.</p><a href='index.php' class='btn btn-danger'>[ <-- RETURN_TO_ARCHIVE ]</a></div></body></html>");
     }
 
     $pdo->prepare("UPDATE articles SET views = views + 1 WHERE id = ?")->execute([$post['id']]);
@@ -45,7 +45,7 @@ try {
 <body>
     <div class="container mt-4 mb-5">
         <div class="mb-4">
-            <a href="index.php" class="text-muted fs-small text-decoration-none">[ <-- RETURN_TO_ARCHIVE ]</a>
+            <a href="index.php" class="btn btn-danger btn-sm">[ <-- RETURN_TO_ARCHIVE ]</a>
         </div>
         
         <div class="post-header">
@@ -75,7 +75,6 @@ try {
                 }
             });
             
-            // Memberikan sedikit efek delay "dekripsi" ala terminal
             setTimeout(() => {
                 document.getElementById('content').innerHTML = marked.parse(rawMarkdown);
             }, 300);
