@@ -79,7 +79,6 @@ try {
     <link rel="stylesheet" href="../assets/style.css">
     <link rel="manifest" href="../manifest.json">
     <style>
-        /* Hanya menyisakan CSS khusus untuk tata letak halaman ini */
         .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .dashboard-card { display: flex; flex-direction: column; justify-content: space-between; }
         .telemetry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
@@ -104,7 +103,7 @@ try {
             </div>
             <form method="POST" style="margin: 0;">
                 <input type="hidden" name="action" value="logout">
-                <button type="submit" class="btn btn-outline-danger" title="Close Session">[ SEVER CONNECTION ]</button>
+                <button type="submit" class="btn btn-outline-danger" title="Sever Connection" style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; padding: 2px 12px;">[ ➜ ]</button>
             </form>
         </div>
 
@@ -135,7 +134,7 @@ try {
                     <h3 class="mb-1 text-main">ARCHIVE: BLOG</h3>
                     <p class="text-muted fs-small mb-3">Manifesto drafting & data storage.</p>
                 </div>
-                <a href="blog_manager.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> OPEN_ARCHIVE</a>
+                <a href="blog_manager.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -143,7 +142,7 @@ try {
                     <h3 class="mb-1 text-main">NAV: INDEX</h3>
                     <p class="text-muted fs-small mb-3">Bookmark and directory cluster.</p>
                 </div>
-                <a href="../index/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> OPEN_DIRECTORIES</a>
+                <a href="../index/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -151,7 +150,7 @@ try {
                     <h3 class="mb-1 text-main">OP: GRID</h3>
                     <p class="text-muted fs-small mb-3">Logistics and task operation matrix.</p>
                 </div>
-                <a href="../grid/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> ACCESS_GRID</a>
+                <a href="../grid/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -159,7 +158,7 @@ try {
                     <h3 class="mb-1 text-main">SECURE: VAULT</h3>
                     <p class="text-muted fs-small mb-3" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
                 </div>
-                <a href="../vault/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> UNLOCK_VAULT</a>
+                <a href="../vault/index.php" target="_blank" class="btn btn-dark btn-block btn-hover-green app-link">> INITIALIZE</a>
             </div>
 
             <div class="card p-3 dashboard-card">
@@ -170,7 +169,7 @@ try {
                 <form method="POST" onsubmit="return confirm('WARNING: Initiating full system data download. Proceed?');" style="margin: 0;">
                     <input type="hidden" name="action" value="backup">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                    <button type="submit" class="btn btn-dark btn-block btn-hover-green w-100">> EXECUTE_BACKUP</button>
+                    <button type="submit" class="btn btn-dark btn-block btn-hover-green w-100">> INITIALIZE</button>
                 </form>
             </div>
 
@@ -265,7 +264,7 @@ try {
                     e.preventDefault(); 
                     const targetUrl = this.getAttribute('href');
                     
-                    splashContent.className = `splash-content text-main`; // Memaksa hijau untuk semua modul
+                    splashContent.className = `splash-content text-main`;
                     splash.classList.remove('splash-hidden');
 
                     setTimeout(() => { 
