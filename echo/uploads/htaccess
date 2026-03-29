@@ -1,8 +1,0 @@
-# Mematikan mesin eksekusi skrip di folder uploads
-<FilesMatch "\.(?i:php|php[0-9]|phtml|cgi|pl|py|jsp|asp|sh|exe)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-# Jika ada celah, paksa file PHP terbaca sebagai teks biasa, bukan program
-AddType text/plain .php .phtml .php3 .php4 .php5 .php8

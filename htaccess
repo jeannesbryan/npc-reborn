@@ -1,0 +1,36 @@
+# ==========================================
+# 1. PENGATURAN GLOBAL (Berlaku untuk semua folder)
+# ==========================================
+# Matikan directory listing di seluruh sudut stasiun
+Options -Indexes
+
+# ==========================================
+# 2. PROTEKSI DATABASE & FILE SISTEM
+# ==========================================
+# Blokir akses ke database (.sqlite) dari browser di folder MANA PUN
+<FilesMatch "\.(sqlite|sqlite3|db|bak)$">
+    Require all denied
+</FilesMatch>
+
+# Blokir akses ke file konfigurasi rahasia (termasuk .htaccess ini sendiri)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# ==========================================
+# 3. ENGINE ROUTING & PERTAHANAN FOLDER SPESIFIK
+# ==========================================
+RewriteEngine On
+
+# [A] PROTEKSI AREA UPLOADS (Karantina File Berbahaya)
+# Jika ada yang mencoba mengakses/mengeksekusi file script (.php, .exe, dll) 
+# di dalam folder uploads manapun (Echo atau Blog), paksa tolak (403 Forbidden)!
+RewriteRule ^(blog|echo)/uploads/.*\.(php|php[0-9]|phtml|cgi|pl|py|jsp|asp|sh|exe)$ - [F,NC,L]
+
+# [B] ROUTING ARTIKEL BLOG
+# Jika URL mengarah ke /blog/judul-artikel (dan itu bukan nama file/folder asli),
+# oper diam-diam ke file view.php untuk memproses database.
+RewriteCond %{REQUEST_URI} ^/blog/ [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^blog/([^/]+)/?$ blog/view.php?slug=$1 [L,QSA]

@@ -1,8 +1,0 @@
-# Mencegah akses langsung ke file database SQLite
-<FilesMatch "\.(sqlite|db)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-# Mencegah akses list direktori jika tidak ada index
-Options -Indexes

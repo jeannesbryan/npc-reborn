@@ -73,11 +73,14 @@ try {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <title>MAIN OS - Bunker Control</title>
     <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/style.css">
-    <link rel="manifest" href="../manifest.json">
     <style>
         .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .dashboard-card { display: flex; flex-direction: column; justify-content: space-between; }
@@ -105,14 +108,6 @@ try {
                 <input type="hidden" name="action" value="logout">
                 <button type="submit" class="btn btn-danger btn-icon" title="Sever Connection">[ ➜ ]</button>
             </form>
-        </div>
-
-        <div id="pwa-install-banner">
-            <div>
-                <strong class="text-main">> SYS_OPTIMIZATION_AVAILABLE</strong><br>
-                <span class="fs-small text-muted">Install UI to home screen for isolated access.</span>
-            </div>
-            <button id="btn-install-pwa" class="btn btn-main btn-sm">[ INSTALL_MODULE ]</button>
         </div>
 
         <?php if (isset($backup_error)): ?>
@@ -274,25 +269,6 @@ try {
                 });
             });
         });
-
-        let deferredPrompt;
-        const pwaBanner = document.getElementById('pwa-install-banner');
-        const installBtn = document.getElementById('btn-install-pwa');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); deferredPrompt = e; pwaBanner.style.display = 'flex';
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') { pwaBanner.style.display = 'none'; }
-                deferredPrompt = null;
-            }
-        });
-
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('../sw.js').catch(err => console.log('SW Reg Failed:', err)); }
     </script>
 </body>
 </html>

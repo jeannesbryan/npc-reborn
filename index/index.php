@@ -91,9 +91,13 @@ foreach ($all_bookmarks as $bm) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <title>NAV: INDEX - Bunker Storage</title>
     <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/style.css">
     <style>
         .cluster-grid { column-width: 300px; column-gap: 20px; }

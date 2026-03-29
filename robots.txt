@@ -1,21 +1,17 @@
-# Blokir seluruh Search Engine (Google, Bing, dll) dari folder privat
+# Mengizinkan bot yang patuh untuk masuk
 User-agent: *
-Disallow: /echo/
-Disallow: /bunker/
-Disallow: /assets/
 
-# Blokir KHUSUS AI Scraper & Web Crawler (ChatGPT, Google AI, dll)
-User-agent: GPTBot
-Disallow: /
-User-agent: ChatGPT-User
-Disallow: /
-User-agent: Google-Extended
-Disallow: /
-User-agent: CCBot
-Disallow: /
-User-agent: anthropic-ai
-Disallow: /
-User-agent: Omgili
-Disallow: /
-User-agent: FacebookBot
-Disallow: /
+# Area yang diizinkan untuk diindeks dan dicrawl AI
+Allow: /$
+Allow: /blog/
+Allow: /echo/
+Allow: /assets/
+
+# Area Terlarang (Zona Militer)
+Disallow: /bunker/
+Disallow: /grid/
+Disallow: /index/
+Disallow: /vault/
+
+# Blokir agresif terhadap file database
+Disallow: /*.sqlite$

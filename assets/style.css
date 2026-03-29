@@ -1,6 +1,4 @@
 /* assets/style.css - [ TERMINAL OS OVERRIDE ] */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-
 :root {
     --bg-dark: #030303; 
     --bg-card: #0a0a0a;
@@ -33,6 +31,10 @@ body::after {
     content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
     background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
     z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none; 
+    
+    /* [ PATCH ]: Akselerasi Perangkat Keras (GPU) */
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 /* Layout & Utilities */

@@ -248,6 +248,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     <title>COMMS: ECHO - Jeannes Bryan | NPC</title>
     <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/style.css">
     <style>
         .thread-modal-dialog { width: 100%; max-width: 600px; background: var(--bg-card); border: 1px solid var(--text-main); box-shadow: 0 0 15px rgba(0,255,65,0.2); padding: 20px; overflow-y: auto; max-height: 90vh; }

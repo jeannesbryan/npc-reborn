@@ -8,8 +8,23 @@
 	<meta name="msvalidate.01" content="69F30B6CF7C799C59DE89EB81E6EE067" />
 	<meta name="yandex-verification" content="56be8ebae84bd731" />
     <meta name="description" content="Entity Tracker. Status: Monitoring the void." />
-    <meta name="theme-color" content="#030303">    
+    <meta name="theme-color" content="#030303">
+    <link rel="canonical" href="https://npc.my.id/" />
+    <meta name="keywords" content="Jeannes Bryan, Tech Enthusiast, NPC, Personal Website, Portfolio" />
+    <meta name="author" content="Jeannes Bryan" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://npc.my.id/" />
+    <meta property="og:title" content="SYS_NODE: Jeannes Bryan" />
+    <meta property="og:description" content="Entity Tracker. Status: Monitoring the void." />
+    <meta property="og:image" content="https://npc.my.id/assets/jeannesbryan.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SYS_NODE: Jeannes Bryan" />
+    <meta name="twitter:description" content="Entity Tracker. Status: Monitoring the void." />
+    <meta name="twitter:image" content="https://npc.my.id/assets/jeannesbryan.webp" />
     <link rel="icon" type="image/svg+xml" href="assets/npc-icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
     <style>
         .landing-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -26,7 +41,7 @@
 
     <div class="container landing-wrapper">
         <div class="card profile-card w-100">
-            <img src="assets/jeannesbryan.webp" alt="Jeannes Bryan" class="avatar-main">
+            <img src="assets/jeannesbryan.webp" alt="Jeannes Bryan" class="avatar-main" width="120" height="120" fetchpriority="high" decoding="async">
             
             <h1 class="mb-1">ENTITY_ID: JEANNES_BRYAN</h1>
             <div class="text-muted fs-small mb-4">CLASS: NPC // STATUS: ONLINE</div>
