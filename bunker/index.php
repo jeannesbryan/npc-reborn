@@ -54,66 +54,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <title>TERMINAL LOGIN - Bunker</title>
-    <meta name="theme-color" content="#050505">    
+    <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="stylesheet" href="../assets/terminal.css">
     <link rel="manifest" href="manifest.json">
+
     <style>
-        body { background-color: #050505; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px; }
-        .terminal-box { background: #0a0a0a; border: 1px solid var(--border-color); padding: 30px; width: 90%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.8); position: relative; }
-        .terminal-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--text-muted); }
-        .terminal-header { text-align: center; margin-bottom: 30px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; }
-        .terminal-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
-        .terminal-input { background: transparent; border: none; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: 'JetBrains Mono', monospace; width: 100%; padding: 8px 0; margin-bottom: 20px; outline: none; border-radius: 0; }
-        .terminal-input:focus { border-bottom-color: var(--text-main); box-shadow: none; }
-        .sys-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 20px; border-left: 2px solid var(--danger); padding-left: 10px; background: rgba(255, 107, 107, 0.1); padding: 10px; }
+        .login-card {
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border-top: 3px solid var(--t-green-dim);
+        }
+
+        #pwa-install-banner { 
+            display: none; 
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-surface);
+            border: 1px dashed var(--t-green); 
+            padding: 15px; 
+            align-items: center; 
+            justify-content: space-between; 
+            width: 90%; 
+            max-width: 400px; 
+            box-shadow: 0 0 15px rgba(0,255,65,0.15); 
+            z-index: 1000;
+        }
     </style>
 </head>
-<body>
-
-    <div id="splash-overlay">
-        <div class="splash-content">
-            > BOOTING_MAIN_OS_ENVIRONMENT<span class="loading-dots"></span>
+<body class="t-crt"> 
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
+            > BOOTING_MAIN_OS_ENVIRONMENT<span class="t-loading-dots"></span>
         </div>
     </div>
 
-    <div class="terminal-box">
-        <div class="terminal-header">
-            <h2 class="mb-1 text-main" style="font-size: 1.5rem; letter-spacing: 2px;">[ BUNKER O.S ]</h2>
-            <div class="text-muted fs-small">> SYSTEM AUTHENTICATION REQ.</div>
+    <div class="t-center-screen flex-column">
+        
+        <div class="t-center-box">
+            
+            <div class="t-card login-card mb-0 text-left">
+                
+                <div class="t-card-header text-center pb-3">
+                    <h2 class="mb-1 text-success" style="font-size: 1.5rem; letter-spacing: 2px;">[ BUNKER O.S ]</h2>
+                    <div class="text-muted fs-small fw-normal">> SYSTEM AUTHENTICATION REQ.</div>
+                </div>
+
+                <?php if ($error_msg): ?>
+                    <div class="t-alert danger mb-4">> <?= $error_msg ?></div>
+                <?php endif; ?>
+
+                <form method="POST">
+                    <label class="t-form-label">>> Operator_Signal_ID</label>
+                    <input type="email" name="operator_id" class="t-input mb-4" required autofocus autocomplete="off" spellcheck="false">
+                    
+                    <label class="t-form-label">>> Decryption_Cipher</label>
+                    
+                    <div class="t-input-group mb-4">
+                        <input type="password" id="cipherInput" name="cipher" class="t-input" required autocomplete="off">
+                        <button type="button" class="t-input-action-btn" onclick="Terminal.toggleInputAction('cipherInput', this)">[ SHOW ]</button>
+                    </div>
+
+                    <button type="submit" class="t-btn t-btn-block mt-3">[ INITIATE UPLINK ]</button>
+                </form>
+
+                <div class="text-center mt-4 fs-small text-muted" style="opacity: 0.6;">
+                    UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED
+                </div>
+            </div>
+            
         </div>
 
-        <?php if ($error_msg): ?>
-            <div class="sys-error"><?= $error_msg ?></div>
-        <?php endif; ?>
-
-        <form method="POST">
-            <label class="terminal-label">>> Operator_Signal_ID</label>
-            <input type="email" name="operator_id" class="terminal-input" required autofocus autocomplete="off" spellcheck="false">
-            <label class="terminal-label">>> Decryption_Cipher</label>
-            <input type="password" name="cipher" class="terminal-input" required autocomplete="off">
-            <button type="submit" class="btn btn-main btn-block mt-3">[ INITIATE UPLINK ]</button>
-        </form>
-
-        <div class="text-center mt-4 fs-small" style="color: #444;">UNIDENTIFIED SIGNALS WILL BE LOGGED AND TRACED</div>
     </div>
 
     <div id="pwa-install-banner">
-        <div style="text-align: left;">
-            <strong class="text-main" style="letter-spacing: 1px;">> INSTALL_BUNKER_OS</strong><br>
+        <div style="text-align: left;" class="d-flex flex-column gap-1">
+            <strong class="text-success" style="letter-spacing: 1px;">> INSTALL_BUNKER_OS</strong>
             <span class="fs-small text-muted" style="font-size: 0.75rem;">Add to home screen for native access.</span>
         </div>
-        <button id="btn-install-pwa" class="btn btn-main btn-sm">INSTALL</button>
+        <button id="btn-install-pwa" class="t-btn t-btn-sm">[ INSTALL ]</button>
     </div>
+
+    <script src="../assets/terminal.js"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            setTimeout(() => { document.getElementById('splash-overlay').classList.add('splash-hidden'); }, 3000);
+            if (typeof Terminal !== 'undefined' && Terminal.splash) {
+                Terminal.splash.close();
+            }
         });
 
+        // Logika PWA
         let deferredPrompt;
         const pwaBanner = document.getElementById('pwa-install-banner');
         const installBtn = document.getElementById('btn-install-pwa');
@@ -131,7 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Failed:', err)); }
+        if ('serviceWorker' in navigator) { 
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Failed:', err)); 
+        }
     </script>
 </body>
 </html>

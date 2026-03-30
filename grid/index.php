@@ -3,7 +3,7 @@ session_start();
 date_default_timezone_set('Asia/Jakarta');
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: ../bunker/index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -177,182 +177,192 @@ foreach ($tasks as $task) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="stylesheet" href="../assets/terminal.css">
     <style>
-        body { padding-bottom: 50px; }
-        
-        .topic-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; flex-wrap: wrap; gap: 15px; }
-        .topic-tab { padding: 8px 15px; border: 1px solid var(--border-color); color: var(--text-muted); text-decoration: none; font-size: 0.85rem; letter-spacing: 1px; transition: 0.3s; background: rgba(0,255,65,0.02); }
-        .topic-tab:hover { border-color: var(--text-main); color: var(--text-main); }
-        .topic-tab.active { background: var(--text-main); color: var(--bg-dark); border-color: var(--text-main); font-weight: bold; box-shadow: 0 0 10px rgba(0,255,65,0.3); }
-
-        .grid-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: start; }
-        .grid-column { background: rgba(0,255,65,0.02); border: 1px dashed var(--border-color); padding: 15px; min-height: 500px; display: flex; flex-direction: column; gap: 12px;}
-        .col-header { font-weight: bold; border-bottom: 1px solid var(--text-main); padding-bottom: 10px; margin-bottom: 10px; text-align: center; letter-spacing: 1px; }
-        
-        .task-card { background: var(--bg-dark); border: 1px solid var(--border-color); padding: 12px; position: relative; word-wrap: break-word; font-size: 0.95rem; line-height: 1.4; border-left: 3px solid var(--text-main); cursor: pointer; transition: 0.2s; }
-        .task-card:hover { border-color: var(--text-main); box-shadow: 0 0 10px rgba(0,255,65,0.1); }
-        .task-card.transit { border-left-color: var(--light); }
-        .task-card.secured { border-left-color: var(--text-muted); opacity: 0.7; text-decoration: line-through; color: var(--text-muted); }
-        
-        .task-actions { display: none; justify-content: space-between; align-items: center; border-top: 1px dotted var(--border-color); padding-top: 12px; margin-top: 10px; }
-        .task-actions.active { display: flex; animation: slideDown 0.2s ease-in-out; }
-
+        /* Animasi dan Styling khusus interaksi Kartu Task */
+        .task-actions { 
+            display: none; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-top: 1px dashed var(--t-green-dim); 
+            padding-top: 12px; 
+            margin-top: 10px; 
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .task-actions.active { 
+            display: flex; 
+            animation: slideDown 0.2s ease-in-out; 
+        }
         @keyframes slideDown {
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        .task-input { background: transparent; border: 1px dashed var(--border-color); color: var(--text-main); width: 100%; padding: 10px; font-family: 'JetBrains Mono', monospace; resize: vertical; outline: none; margin-bottom: 10px; }
-        .task-input:focus { border-color: var(--text-main); box-shadow: inset 0 0 5px rgba(0,255,65,0.1); }
+
+        /* Varian status board-card tanpa merusak struktur .t-board-card bawaan */
+        .card-transit { color: var(--t-yellow); border-color: var(--t-yellow-dim); }
+        .card-secured { color: var(--t-green-dim); text-decoration: line-through; opacity: 0.7; }
     </style>
 </head>
-<body>
+<body class="t-crt">
 
-    <div id="splash-overlay">
-        <div class="splash-content text-main">
-            > ALIGNING_GRID_MATRICES<span class="loading-dots"></span>
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
+            > ALIGNING_GRID_MATRICES<span class="t-loading-dots"></span>
         </div>
     </div>
 
-    <div class="container" style="max-width: 1200px; margin-top: 30px;">
+    <div class="t-container-fluid" style="margin-top: 20px;">
         
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3">
             <div>
-                <h2 class="mb-0 text-main" style="letter-spacing: 2px;">[ OP: GRID ]</h2>
-                <div class="text-muted fs-small mt-1">> LOGISTICS_MATRIX_V2 // <span style="color:var(--text-main);"><?= htmlspecialchars($active_topic_name) ?></span></div>
+                <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> OP: GRID_MATRIX</h2>
+                <div class="text-muted fs-small mt-1">> LOGISTICS_MATRIX_V2 // <span style="color:var(--t-green);"><?= htmlspecialchars($active_topic_name) ?></span></div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-danger btn-icon" title="Return to Bunker">[ ⬅ ]</a>
+            <div>
+                <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Bunker">[ ➜ ] RETURN_OS</a>
+            </div>
         </div>
 
-        <div class="topic-bar">
-            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+        <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3 flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
                 <div class="d-flex gap-2 flex-wrap">
                     <?php foreach ($topics as $t): ?>
-                        <a href="?topic=<?= $t['id'] ?>" class="topic-tab <?= ($t['id'] == $active_topic_id) ? 'active' : '' ?>">
+                        <a href="?topic=<?= $t['id'] ?>" class="t-btn <?= ($t['id'] == $active_topic_id) ? 'active font-bold t-glow' : '' ?>">
                             [ <?= htmlspecialchars($t['name']) ?> ]
                         </a>
                     <?php endforeach; ?>
                 </div>
                 
-                <div style="color: var(--text-muted); opacity: 0.5;">|</div>
+                <div class="text-muted" style="opacity: 0.5;">|</div>
                 
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="createNewTopic()" class="btn btn-main btn-icon" title="New Sector">➕</button>
-                    <button onclick="renameTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="btn btn-main btn-icon" title="Edit Sector">✏️</button>
+                <div class="d-flex gap-2">
+                    <button onclick="createNewTopic()" class="t-btn t-btn-sm" title="New Sector">[ + ] NEW</button>
+                    <button onclick="renameTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="t-btn t-btn-sm" title="Edit Sector">[ EDIT ]</button>
                     <?php if (count($topics) > 1): ?>
-                        <button onclick="purgeTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="btn btn-danger btn-icon" title="Purge Sector">🗑️</button>
+                        <button onclick="purgeTopic(<?= $active_topic_id ?>, '<?= htmlspecialchars($active_topic_name, ENT_QUOTES) ?>')" class="t-btn danger t-btn-sm" title="Purge Sector">[ X PURGE ]</button>
                     <?php endif; ?>
                 </div>
             </div>
 
             <div>
-                <button onclick="toggleInjectForm()" class="btn btn-main btn-sm">[ INJECT_TASK ]</button>
+                <button onclick="toggleInjectForm()" class="t-btn font-bold t-glow">[ INJECT_TASK ]</button>
             </div>
         </div>
 
-        <div id="inject-task-pane" style="display: none; margin-bottom: 25px; background: rgba(0,255,65,0.02); border: 1px dashed var(--border-color); padding: 15px;">
-            <div class="text-main fw-bold mb-2 fs-small">> PREPARING_NEW_PAYLOAD</div>
+        <div id="inject-task-pane" class="t-card mb-4" style="display: none;">
+            <div class="t-card-header">> PREPARING_NEW_PAYLOAD</div>
             <form method="POST" style="margin: 0;">
                 <input type="hidden" name="action" value="add_task">
                 <input type="hidden" name="topic_id" value="<?= $active_topic_id ?>">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                <textarea name="content" class="task-input" rows="2" placeholder="> Enter new task payload..." required></textarea>
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="toggleInjectForm()">[ ABORT ]</button>
-                    <button type="submit" class="btn btn-main btn-sm">[ SUBMIT_PAYLOAD ]</button>
+                
+                <textarea name="content" class="t-textarea" rows="2" placeholder="> ENTER NEW TASK PAYLOAD..." required></textarea>
+                
+                <div class="d-flex justify-content-end gap-2 mt-2">
+                    <button type="button" class="t-btn danger t-btn-sm" onclick="toggleInjectForm()">[ ABORT ]</button>
+                    <button type="submit" class="t-btn t-btn-sm">[ SUBMIT_PAYLOAD ]</button>
                 </div>
             </form>
         </div>
 
-        <div class="grid-board">
+        <div class="t-board w-100">
             
-            <div class="grid-column">
-                <div class="col-header">> PENDING [ <?= count($board['PENDING']) ?> ]</div>
-                <?php 
-                $tot_pending = count($board['PENDING']);
-                foreach ($board['PENDING'] as $idx => $t): 
-                ?>
-                    <div class="task-card" onclick="toggleAccordion(<?= $t['id'] ?>)">
-                        <div style="color: var(--text-main);"><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
-                        
-                        <div class="task-actions" id="actions-<?= $t['id'] ?>" onclick="event.stopPropagation();">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-danger btn-icon" title="Purge Task" onclick="return confirm('Erase task?');">🗑️</button></form>
-                                <button type="button" class="btn btn-main btn-icon" title="Edit Task" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">✏️</button>
-                                
-                                <?php if ($idx > 0): ?>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="up"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move Up">🔼</button></form>
-                                <?php endif; ?>
-                                
-                                <?php if ($idx < $tot_pending - 1): ?>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="down"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move Down">🔽</button></form>
-                                <?php endif; ?>
+            <div class="t-board-column" style="flex: 1; min-width: 300px;">
+                <div class="t-board-header">> PENDING [ <?= count($board['PENDING']) ?> ]</div>
+                <div class="t-board-body">
+                    <?php 
+                    $tot_pending = count($board['PENDING']);
+                    foreach ($board['PENDING'] as $idx => $t): 
+                    ?>
+                        <div class="t-board-card" onclick="toggleAccordion(<?= $t['id'] ?>)">
+                            <div class="text-success"><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
+                            
+                            <div class="task-actions" id="actions-<?= $t['id'] ?>" onclick="event.stopPropagation();">
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn danger t-btn-sm" title="Purge Task" onclick="return confirm('Erase task?');">[ X ]</button></form>
+                                    <button type="button" class="t-btn t-btn-sm" title="Edit Task" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
+                                    
+                                    <?php if ($idx > 0): ?>
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="up"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm" title="Move Up">[ ^ ]</button></form>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ($idx < $tot_pending - 1): ?>
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="down"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm" title="Move Down">[ v ]</button></form>
+                                    <?php endif; ?>
+                                </div>
+                                <form method="POST" class="m-0"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm text-warning" style="border-color: var(--t-yellow);" title="Move to In Transit">[ -> ]</button></form>
                             </div>
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move to In Transit">▶️</button></form>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
-            <div class="grid-column">
-                <div class="col-header" style="color: var(--light); border-color: var(--light);">> IN_TRANSIT [ <?= count($board['IN_TRANSIT']) ?> ]</div>
-                <?php 
-                $tot_transit = count($board['IN_TRANSIT']);
-                foreach ($board['IN_TRANSIT'] as $idx => $t): 
-                ?>
-                    <div class="task-card transit" onclick="toggleAccordion(<?= $t['id'] ?>)">
-                        <div style="color: var(--light);"><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
-                        <div class="task-actions" id="actions-<?= $t['id'] ?>" onclick="event.stopPropagation();">
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="PENDING"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move to Pending">◀️</button></form>
+            <div class="t-board-column" style="flex: 1; min-width: 300px;">
+                <div class="t-board-header text-warning" style="border-bottom-color: var(--t-yellow-dim);">> IN_TRANSIT [ <?= count($board['IN_TRANSIT']) ?> ]</div>
+                <div class="t-board-body">
+                    <?php 
+                    $tot_transit = count($board['IN_TRANSIT']);
+                    foreach ($board['IN_TRANSIT'] as $idx => $t): 
+                    ?>
+                        <div class="t-board-card card-transit" onclick="toggleAccordion(<?= $t['id'] ?>)">
+                            <div><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
                             
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <button type="button" class="btn btn-main btn-icon" title="Edit Task" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">✏️</button>
+                            <div class="task-actions" id="actions-<?= $t['id'] ?>" onclick="event.stopPropagation();">
+                                <form method="POST" class="m-0"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="PENDING"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm text-success" title="Move to Pending">[ <- ]</button></form>
                                 
-                                <?php if ($idx > 0): ?>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="up"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move Up">🔼</button></form>
-                                <?php endif; ?>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button type="button" class="t-btn t-btn-sm" title="Edit Task" style="color:var(--t-yellow); border-color:var(--t-yellow);" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
+                                    
+                                    <?php if ($idx > 0): ?>
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="up"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm" style="color:var(--t-yellow); border-color:var(--t-yellow);" title="Move Up">[ ^ ]</button></form>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ($idx < $tot_transit - 1): ?>
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="down"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm" style="color:var(--t-yellow); border-color:var(--t-yellow);" title="Move Down">[ v ]</button></form>
+                                    <?php endif; ?>
+                                    
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn danger t-btn-sm" title="Purge Task" onclick="return confirm('Erase task?');">[ X ]</button></form>
+                                </div>
                                 
-                                <?php if ($idx < $tot_transit - 1): ?>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="down"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move Down">🔽</button></form>
-                                <?php endif; ?>
-                                
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-danger btn-icon" title="Purge Task" onclick="return confirm('Erase task?');">🗑️</button></form>
+                                <form method="POST" class="m-0"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="SECURED"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm text-muted" title="Move to Secured">[ -> ]</button></form>
                             </div>
-                            
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="SECURED"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move to Secured">▶️</button></form>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
-            <div class="grid-column">
-                <div class="col-header" style="color: var(--text-muted); border-color: var(--text-muted);">> SECURED [ <?= count($board['SECURED']) ?> ]</div>
-                <?php 
-                $tot_secured = count($board['SECURED']);
-                foreach ($board['SECURED'] as $idx => $t): 
-                ?>
-                    <div class="task-card secured" onclick="toggleAccordion(<?= $t['id'] ?>)">
-                        <div><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
-                        <div class="task-actions" id="actions-<?= $t['id'] ?>" onclick="event.stopPropagation();" style="justify-content: space-between; gap: 6px;">
-                            <form method="POST" style="margin:0;"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Revert to In Transit">◀️</button></form>
+            <div class="t-board-column" style="flex: 1; min-width: 300px;">
+                <div class="t-board-header text-muted">> SECURED [ <?= count($board['SECURED']) ?> ]</div>
+                <div class="t-board-body">
+                    <?php 
+                    $tot_secured = count($board['SECURED']);
+                    foreach ($board['SECURED'] as $idx => $t): 
+                    ?>
+                        <div class="t-board-card card-secured" onclick="toggleAccordion(<?= $t['id'] ?>)">
+                            <div><?= nl2br(htmlspecialchars(htmlspecialchars_decode($t['content']))) ?></div>
                             
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <button type="button" class="btn btn-main btn-icon" title="Edit Task" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">✏️</button>
+                            <div class="task-actions" id="actions-<?= $t['id'] ?>" onclick="event.stopPropagation();">
+                                <form method="POST" class="m-0"><input type="hidden" name="action" value="move_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="new_status" value="IN_TRANSIT"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm text-warning" style="border-color: var(--t-yellow);" title="Revert to In Transit">[ <- ]</button></form>
                                 
-                                <?php if ($idx > 0): ?>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="up"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move Up">🔼</button></form>
-                                <?php endif; ?>
-                                
-                                <?php if ($idx < $tot_secured - 1): ?>
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="down"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-main btn-icon" title="Move Down">🔽</button></form>
-                                <?php endif; ?>
-                                
-                                <form method="POST" style="margin:0;"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="btn btn-danger btn-icon" title="Purge Permanently" onclick="return confirm('Erase permanently?');">🗑️</button></form>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button type="button" class="t-btn t-btn-sm text-muted" title="Edit Task" data-content="<?= htmlspecialchars(htmlspecialchars_decode($t['content']), ENT_QUOTES) ?>" onclick="editTask(<?= $t['id'] ?>, this)">[ EDIT ]</button>
+                                    
+                                    <?php if ($idx > 0): ?>
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="up"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm text-muted" title="Move Up">[ ^ ]</button></form>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ($idx < $tot_secured - 1): ?>
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="reorder_task"><input type="hidden" name="direction" value="down"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn t-btn-sm text-muted" title="Move Down">[ v ]</button></form>
+                                    <?php endif; ?>
+                                    
+                                    <form method="POST" class="m-0"><input type="hidden" name="action" value="delete_task"><input type="hidden" name="item_id" value="<?= $t['id'] ?>"><input type="hidden" name="topic_id" value="<?= $active_topic_id ?>"><input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"><button type="submit" class="t-btn danger t-btn-sm" title="Purge Permanently" onclick="return confirm('Erase permanently?');">[ X ]</button></form>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
         </div>
@@ -367,10 +377,12 @@ foreach ($tasks as $task) {
         <input type="hidden" name="content" id="taskContentField">
     </form>
 
+    <script src="../assets/terminal.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const splash = document.getElementById('splash-overlay');
-            if (splash) setTimeout(() => { splash.classList.add('splash-hidden'); }, 1000);
+            if (typeof Terminal !== 'undefined' && Terminal.splash) {
+                Terminal.splash.close();
+            }
         });
 
         function toggleInjectForm() {

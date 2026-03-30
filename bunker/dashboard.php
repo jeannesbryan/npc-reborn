@@ -80,127 +80,131 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="stylesheet" href="../assets/terminal.css">
+    
     <style>
-        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .dashboard-card { display: flex; flex-direction: column; justify-content: space-between; }
+        /* CSS Khusus Layout Dashboard */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .telemetry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .telemetry-item { background: rgba(0,255,65,0.05); border: 1px dashed var(--border-color); padding: 15px; }
-        .telemetry-val { font-size: 1.5rem; font-weight: bold; color: var(--text-main); margin-bottom: 5px; }
+        .telemetry-val { font-size: 1.5rem; font-weight: bold; color: var(--t-green); margin-bottom: 5px; }
+        
+        /* Memperhalus header card telemetry */
+        .telemetry-item { background: rgba(0, 255, 65, 0.03); border: 1px dashed var(--t-green-dim); padding: 15px; transition: 0.2s; }
+        .telemetry-item:hover { border-color: var(--t-green); box-shadow: 0 0 10px rgba(0, 255, 65, 0.1); }
     </style>
 </head>
-<body>
-
-    <div id="splash-overlay">
-        <div class="splash-content text-main">
-            > PROCESSING_ENCRYPTED_SATELLITE_TRANSMISSION<span class="loading-dots"></span>
+<body class="t-crt"> 
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
+            > DECRYPTING_DASHBOARD_TELEMETRY<span class="t-loading-dots"></span>
         </div>
     </div>
 
-    <div class="container" style="max-width: 1200px;">
+    <div class="t-container-fluid">
         
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mt-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4" style="border-bottom: 1px dashed var(--t-green-dim); padding-bottom: 15px; margin-top: 20px;">
             <div>
-                <h2 class="mb-0"><span class="status-indicator"></span> BUNKER MAIN O.S.</h2>
+                <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> BUNKER MAIN O.S.</h2>
                 <div class="text-muted fs-small mt-1">> AUTHORIZATION ACCEPTED. WELCOME, COMMANDER.</div>
             </div>
-            <form method="POST" style="margin: 0;">
+            <form method="POST" class="m-0">
                 <input type="hidden" name="action" value="logout">
-                <button type="submit" class="btn btn-danger btn-icon" title="Sever Connection">[ ➜ ]</button>
+                <button type="submit" class="t-btn danger" title="Sever Connection">[ ➜ ] LOGOUT</button>
             </form>
         </div>
 
         <?php if (isset($backup_error)): ?>
-            <div class="alert-bunker p-2 mb-3 text-center" style="color: var(--danger); border: 1px solid var(--danger);"><?= $backup_error ?></div>
+            <div class="t-alert danger mb-4">> <?= $backup_error ?></div>
         <?php endif; ?>
 
-        <div class="dashboard-cards">
+        <div class="dashboard-grid">
             
-            <div class="card p-3 dashboard-card">
+            <div class="t-card mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-main">COMMS: ECHO</h3>
-                    <p class="text-muted fs-small mb-3">Shortwave transmission station.</p>
+                    <h3 class="mb-1 text-success">> COMMS: ECHO</h3>
+                    <p class="text-muted fs-small mb-4">Shortwave transmission station.</p>
                 </div>
-                <a href="../echo/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
+                <a href="../echo/index.php" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
-            <div class="card p-3 dashboard-card">
+            <div class="t-card mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-main">ARCHIVE: BLOG</h3>
-                    <p class="text-muted fs-small mb-3">Manifesto drafting & data storage.</p>
+                    <h3 class="mb-1 text-success">> ARCHIVE: BLOG</h3>
+                    <p class="text-muted fs-small mb-4">Manifesto drafting & data storage.</p>
                 </div>
-                <a href="blog_manager.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
+                <a href="blog_manager.php" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
-            <div class="card p-3 dashboard-card">
+            <div class="t-card mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-main">NAV: INDEX</h3>
-                    <p class="text-muted fs-small mb-3">Bookmark and directory cluster.</p>
+                    <h3 class="mb-1 text-success">> NAV: INDEX</h3>
+                    <p class="text-muted fs-small mb-4">Bookmark and directory cluster.</p>
                 </div>
-                <a href="../index/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
+                <a href="../index/index.php" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
-            <div class="card p-3 dashboard-card">
+            <div class="t-card mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-main">OP: GRID</h3>
-                    <p class="text-muted fs-small mb-3">Logistics and task operation matrix.</p>
+                    <h3 class="mb-1 text-success">> OP: GRID</h3>
+                    <p class="text-muted fs-small mb-4">Logistics and task operation matrix.</p>
                 </div>
-                <a href="../grid/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
+                <a href="../grid/index.php" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
-            <div class="card p-3 dashboard-card">
+            <div class="t-card mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-main">SECURE: VAULT</h3>
-                    <p class="text-muted fs-small mb-3" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
+                    <h3 class="mb-1 text-success">> SECURE: VAULT</h3>
+                    <p class="text-muted fs-small mb-4" style="opacity: 0.8;">Zero-knowledge encrypted payload. Requires master key.</p>
                 </div>
-                <a href="../vault/index.php" target="_blank" class="btn btn-main btn-block app-link">> INITIALIZE</a>
+                <a href="../vault/index.php" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
-            <div class="card p-3 dashboard-card">
+            <div class="t-card danger mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-main">PROTOCOL: EVAC</h3>
-                    <p class="text-muted fs-small mb-3" style="opacity: 0.8;">Package and secure all server data into a zip payload.</p>
+                    <h3 class="mb-1 text-danger">> PROTOCOL: EVAC</h3>
+                    <p class="text-danger fs-small mb-4" style="opacity: 0.8;">Package and secure all server data into a zip payload.</p>
                 </div>
-                <form method="POST" onsubmit="return confirm('WARNING: Initiating full system data download. Proceed?');" style="margin: 0;">
+                <form method="POST" onsubmit="return confirm('WARNING: Initiating full system data download. Proceed?');" class="m-0">
                     <input type="hidden" name="action" value="backup">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                    <button type="submit" class="btn btn-main btn-block w-100">> INITIALIZE</button>
+                    <button type="submit" class="t-btn danger t-btn-block w-100">INITIALIZE EVAC</button>
                 </form>
             </div>
 
         </div>
 
-        <div class="card p-3 mb-4">
-            <h3 class="mb-3">> CORE_TELEMETRY: DATA BANK INTEGRITY</h3>
+        <div class="t-card mb-4">
+            <h3 class="mb-3 text-success">> CORE_TELEMETRY: DATA BANK INTEGRITY</h3>
             <div class="telemetry-grid">
                 
                 <div class="telemetry-item">
                     <div class="text-muted fs-small">> TOTAL_LOCAL_DB_WEIGHT</div>
                     <div class="telemetry-val"><?= formatBytes($total_db_size) ?></div>
-                    <div class="fs-small" style="color: var(--text-muted); line-height: 1.4;">
-                        <span class="text-main">></span> BUNKER: <?= formatBytes($bunker_db_size) ?><br>
-                        <span class="text-main">></span> ECHO: <?= formatBytes($echo_db_size) ?><br>
-                        <span class="text-main">></span> BLOG: <?= formatBytes($blog_db_size) ?><br>
-                        <span class="text-main">></span> INDEX: <?= formatBytes($index_db_size) ?><br>
-                        <span class="text-main">></span> GRID: <?= formatBytes($grid_db_size) ?><br>
-                        <span class="text-main">> VAULT: [ CLOUD_SATELLITE ]</span>
+                    <div class="fs-small text-muted" style="line-height: 1.6;">
+                        <span class="text-success">></span> BUNKER: <?= formatBytes($bunker_db_size) ?><br>
+                        <span class="text-success">></span> ECHO: <?= formatBytes($echo_db_size) ?><br>
+                        <span class="text-success">></span> BLOG: <?= formatBytes($blog_db_size) ?><br>
+                        <span class="text-success">></span> INDEX: <?= formatBytes($index_db_size) ?><br>
+                        <span class="text-success">></span> GRID: <?= formatBytes($grid_db_size) ?><br>
+                        <span class="text-success">> VAULT: [ CLOUD_SATELLITE ]</span>
                     </div>
                 </div>
 
                 <div class="telemetry-item">
                     <div class="text-muted fs-small">> TOTAL_MEDIA_PAYLOAD</div>
                     <div class="telemetry-val"><?= formatBytes($total_media_size) ?></div>
-                    <div class="fs-small" style="color: var(--text-muted); line-height: 1.4;">
+                    <div class="fs-small text-muted" style="line-height: 1.6;">
                         ATTACHMENTS: <?= $total_media_count ?> FILES<br>
-                        <span class="text-main">></span> ECHO_DIR: <?= formatBytes($echo_media['size']) ?><br>
-                        <span class="text-main">></span> BLOG_DIR: <?= formatBytes($blog_media['size']) ?>
+                        <span class="text-success">></span> ECHO_DIR: <?= formatBytes($echo_media['size']) ?><br>
+                        <span class="text-success">></span> BLOG_DIR: <?= formatBytes($blog_media['size']) ?>
                     </div>
                 </div>
 
                 <div class="telemetry-item">
                     <div class="text-muted fs-small">> SYS_ENVIRONMENT</div>
                     <div class="telemetry-val" style="font-size: 1.2rem; padding-top: 5px;">STABLE</div>
-                    <div class="fs-small mt-1" style="color: var(--text-muted); line-height: 1.4;">
+                    <div class="fs-small mt-2 text-muted" style="line-height: 1.6;">
                         PHP_VERSION: <?= phpversion() ?><br>
                         SQLITE_VERSION: <?= $pdo->query('select sqlite_version()')->fetchColumn() ?><br>
                         MAX_UPLOAD: <?= ini_get('upload_max_filesize') ?>
@@ -210,10 +214,10 @@ try {
             </div>
         </div>
 
-        <div class="card p-3 mb-5">
-            <h3 class="mb-3">> RADAR: ACCESS LOGS</h3>
-            <div class="table-responsive">
-                <table>
+        <div class="t-card mb-5">
+            <h3 class="mb-3 text-success">> RADAR: ACCESS LOGS</h3>
+            <div class="t-table-wrapper mb-0">
+                <table class="t-table">
                     <thead>
                         <tr>
                             <th>TIMESTAMP (WIB)</th>
@@ -227,7 +231,7 @@ try {
                             <?php foreach ($logs as $log): ?>
                                 <tr>
                                     <td class="text-muted"><?= htmlspecialchars($log['created_at'] ?? '') ?></td>
-                                    <td class="fw-bold <?= ($log['status'] ?? '') === 'SUCCESS' ? 'text-success' : 'text-danger' ?>">
+                                    <td class="font-bold <?= ($log['status'] ?? '') === 'SUCCESS' ? 'text-success' : 'text-danger' ?>">
                                         [ <?= htmlspecialchars($log['status'] ?? 'UNKNOWN') ?> ]
                                     </td>
                                     <td><?= htmlspecialchars($log['ip_address'] ?? 'UNKNOWN_IP') ?></td>
@@ -246,28 +250,14 @@ try {
         
     </div>
 
+    <script src="../assets/terminal.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const splash = document.getElementById('splash-overlay');
-            const splashContent = splash.querySelector('.splash-content');
-
-            setTimeout(() => { splash.classList.add('splash-hidden'); }, 3000);
-
-            const appLinks = document.querySelectorAll('.app-link');
-            appLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault(); 
-                    const targetUrl = this.getAttribute('href');
-                    
-                    splashContent.className = `splash-content text-main`;
-                    splash.classList.remove('splash-hidden');
-
-                    setTimeout(() => { 
-                        window.open(targetUrl, '_blank'); 
-                        splash.classList.add('splash-hidden'); 
-                    }, 3000);
-                });
-            });
+            // Tutup splash screen awal saat halaman dashboard pertama kali dimuat
+            if (typeof Terminal !== 'undefined' && Terminal.splash) {
+                Terminal.splash.close();
+            }
         });
     </script>
 </body>

@@ -51,9 +51,9 @@ function format_indo_date($datetime) {
 }
 
 function parse_echo_embeds($text) {
-    $text = preg_replace('~(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\S+)?~i', '<div class="ratio mt-2 mb-2"><iframe src="https://www.youtube.com/embed/$1" allowfullscreen></iframe></div>', $text);
-    $text = preg_replace('~(?<!src=")(https?://[^\s]+(?:\.jpg|\.jpeg|\.png|\.gif|\.webp))~i', '<img src="$1" class="echo-media-single mt-2 mb-2 zoomable-image" title="[ CLICK TO ENLARGE ]" alt="Attached Data">', $text);
-    $text = preg_replace('~(?<!src="|")\b(https?://[^\s<]+)\b~i', '<a href="$1" target="_blank">[LINK: $1]</a>', $text);
+    $text = preg_replace('~(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\S+)?~i', '<div class="mt-2 mb-2"><iframe width="100%" height="315" style="border:1px dashed var(--t-green-dim);" src="https://www.youtube.com/embed/$1" allowfullscreen></iframe></div>', $text);
+    $text = preg_replace('~(?<!src=")(https?://[^\s]+(?:\.jpg|\.jpeg|\.png|\.gif|\.webp))~i', '<img src="$1" class="echo-media zoomable-image mt-2 mb-2" title="[ CLICK TO ENLARGE ]" alt="Attached Data">', $text);
+    $text = preg_replace('~(?<!src="|")\b(https?://[^\s<]+)\b~i', '<a href="$1" target="_blank" style="color:var(--t-green); text-decoration:underline dashed;">[LINK: $1]</a>', $text);
     return $text;
 }
 
@@ -109,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
+// FUNGSI RENDER (Dirombak untuk Terminal UI)
 function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
     $video_extensions = ['mp4', 'webm', 'ogg'];
     $media_stmt = $pdo->prepare("SELECT file_name FROM post_media WHERE post_id = ?");
@@ -121,88 +122,80 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
         $child_stmt->execute([$post['id']]);
         $child_count = $child_stmt->fetchColumn();
     }
+    
+    // Tentukan class parent (Card biasa atau bagian dari Thread Connector)
+    $wrapper_class = $is_thread_view ? 't-thread-item' : 't-card mb-4';
+    $volatile_class = !empty($post['expires_at']) ? 'danger' : '';
     ?>
-    <div class="card mb-3 <?= $is_thread_view ? 'thread-item' : '' ?>" style="<?= $is_thread_view ? 'border:none; border-left:2px dashed var(--border-color); border-radius:0; padding-left:15px; background:transparent;' : '' ?>">
-        <div class="p-3">
-            
-            <?php if (!empty($post['expires_at'])): ?>
-                <div class="mb-3 pb-1 fs-small" style="color: var(--danger); border-bottom: 1px dotted var(--danger);">
-                    > [ WARNING: VOLATILE SIGNAL. SELF-DESTRUCT SEQUENCE INITIATED ]
-                </div>
-            <?php endif; ?>
-
-            <div class="d-flex justify-content-between align-items-start mb-2 border-bottom pb-2">
-                <div class="d-flex gap-2 align-items-center">
-                    <img src="../assets/jeannesbryan.webp" class="avatar" width="45" height="45" alt="Avatar">
-                    <div>
-                        <div class="text-main fw-bold">ENTITY_ID: JEANNES_BRYAN <span class="text-muted fw-normal fs-small">&#x25CF; [AUTHOR]</span></div>
-                        <div class="text-muted fs-small">> LOG_DATE: <?= format_indo_date($post['created_at']) ?></div>
-                    </div>
-                </div>
-                
-                <?php if ($is_admin): ?>
-                <div class="d-flex gap-2">
-                    <?php if (!$is_thread_view && empty($post['expires_at'])): ?>
-                        <button type="button" class="btn btn-main btn-icon" title="Chain / Reply" onclick="replyTo(<?= $post['id'] ?>)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                            </svg>
-                        </button>
-                    <?php endif; ?>
-                    <form method="POST" onsubmit="return confirm('WARNING: Purge this signal and its entire chain?');" style="margin:0;">
-                        <input type="hidden" name="action" value="delete_post">
-                        <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                        <button type="submit" class="btn btn-danger btn-icon" title="Purge Signal">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-                <?php endif; ?>
+    
+    <div class="<?= $wrapper_class ?> <?= $volatile_class ?>" style="<?= $is_thread_view ? 'margin-bottom: 30px;' : '' ?>">
+        
+        <?php if (!empty($post['expires_at'])): ?>
+            <div class="mb-3 pb-2 fs-small text-danger t-border-bottom t-flicker">
+                > [ WARNING: VOLATILE SIGNAL. SELF-DESTRUCT INITIATED ]
             </div>
+        <?php endif; ?>
 
-            <?php if (!empty($post['content'])): ?>
-                <div class="mb-2" style="color: var(--text-main);">
-                    <?= parse_echo_embeds(nl2br($post['content'])) ?>
+        <div class="d-flex justify-content-between align-items-start mb-3 t-border-bottom pb-2">
+            <div class="d-flex gap-3 align-items-center">
+                <img src="../assets/jeannesbryan.webp" width="45" height="45" alt="Avatar" style="border: 1px solid var(--t-green-dim); filter: grayscale(1) sepia(0.5) hue-rotate(80deg);">
+                <div>
+                    <div class="font-bold text-success">ENTITY_ID: JEANNES_BRYAN <span class="text-muted fw-normal fs-small">&#x25CF; [AUTHOR]</span></div>
+                    <div class="text-muted fs-small">> LOG_DATE: <?= format_indo_date($post['created_at']) ?></div>
                 </div>
-            <?php endif; ?>
-
-            <?php if (count($medias) > 0): ?>
-                <div class="echo-media-grid mt-2">
-                    <?php 
-                    $is_single = count($medias) == 1;
-                    foreach ($medias as $media): 
-                        $file_ext = strtolower(pathinfo($media['file_name'], PATHINFO_EXTENSION));
-                        $item_class = $is_single ? 'media-item full-width' : 'media-item';
-                        $img_class = $is_single ? 'echo-media-single zoomable-image' : 'echo-media zoomable-image';
-                    ?>
-                        <div class="<?= $item_class ?>">
-                            <?php if (in_array($file_ext, $video_extensions)): ?>
-                                <video controls class="<?= $is_single ? 'echo-media-single' : 'echo-media' ?>">
-                                    <source src="uploads/<?= $media['file_name'] ?>" type="video/<?= $file_ext === 'mkv' ? 'webm' : $file_ext ?>">
-                                </video>
-                            <?php else: ?>
-                                <img src="uploads/<?= $media['file_name'] ?>" class="<?= $img_class ?>" title="[ ENLARGE_VISUAL ]" alt="Attached Data">
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($child_count > 0 && !$is_thread_view): ?>
-                <button class="btn btn-main btn-sm btn-block mt-3" onclick="viewThread(<?= $post['id'] ?>)">&#x21B3; [ DECRYPT <?= $child_count ?> LINKED SIGNALS ]</button>
+            </div>
+            
+            <?php if ($is_admin): ?>
+            <div class="d-flex gap-2">
+                <?php if (!$is_thread_view && empty($post['expires_at'])): ?>
+                    <button type="button" class="t-btn t-btn-sm" title="Chain / Reply" onclick="replyTo(<?= $post['id'] ?>)">[ ↳ CHAIN ]</button>
+                <?php endif; ?>
+                <form method="POST" onsubmit="return confirm('WARNING: Purge this signal and its entire chain?');" class="m-0">
+                    <input type="hidden" name="action" value="delete_post">
+                    <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <button type="submit" class="t-btn danger t-btn-sm" title="Purge Signal">[ X PURGE ]</button>
+                </form>
+            </div>
             <?php endif; ?>
         </div>
+
+        <?php if (!empty($post['content'])): ?>
+            <div class="mb-3" style="color: var(--t-green); font-size: 14px; word-wrap: break-word;">
+                <?= parse_echo_embeds(nl2br($post['content'])) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (count($medias) > 0): ?>
+            <div class="echo-media-grid mt-2">
+                <?php 
+                $is_single = count($medias) == 1;
+                foreach ($medias as $media): 
+                    $file_ext = strtolower(pathinfo($media['file_name'], PATHINFO_EXTENSION));
+                ?>
+                    <div class="media-item <?= $is_single ? 'full-width' : '' ?>">
+                        <?php if (in_array($file_ext, $video_extensions)): ?>
+                            <video controls class="echo-media w-100" style="border: 1px dashed var(--t-green-dim);">
+                                <source src="uploads/<?= $media['file_name'] ?>" type="video/<?= $file_ext === 'mkv' ? 'webm' : $file_ext ?>">
+                            </video>
+                        <?php else: ?>
+                            <img src="uploads/<?= $media['file_name'] ?>" class="echo-media zoomable-image w-100" title="[ ENLARGE_VISUAL ]" alt="Attached Data" style="cursor: pointer; border: 1px dashed var(--t-green-dim); filter: grayscale(0.5) sepia(0.5);">
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($child_count > 0 && !$is_thread_view): ?>
+            <button class="t-btn t-btn-sm w-100 mt-3" onclick="viewThread(<?= $post['id'] ?>)">
+                &#x21B3; [ DECRYPT <?= $child_count ?> LINKED SIGNALS ]
+            </button>
+        <?php endif; ?>
     </div>
     <?php
 }
 
+// AJAX HANDLERS
 if (isset($_GET['ajax_thread']) && $_GET['ajax_thread'] == '1') {
     $parent_id = (int)$_GET['parent_id'];
     $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ?"); $stmt->execute([$parent_id]);
@@ -211,8 +204,10 @@ if (isset($_GET['ajax_thread']) && $_GET['ajax_thread'] == '1') {
     $stmt = $pdo->prepare("SELECT * FROM posts WHERE parent_id = ? ORDER BY created_at ASC"); $stmt->execute([$parent_id]);
     $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo "<div class='thread-container p-2'>";
-    if ($parent_post) render_echo_card($parent_post, $pdo, $is_admin, true);
+    // Menggunakan t-thread dari Terminal UI
+    if ($parent_post) render_echo_card($parent_post, $pdo, $is_admin, false);
+    
+    echo "<div class='t-thread mt-4'>";
     foreach ($children as $child) { render_echo_card($child, $pdo, $is_admin, true); }
     echo "</div>"; exit;
 }
@@ -222,10 +217,12 @@ if (isset($_GET['ajax_story']) && $_GET['ajax_story'] == '1') {
     $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ?"); $stmt->execute([$story_id]);
     $story = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    echo "<div class='thread-container p-2'>";
-    if ($story) { render_echo_card($story, $pdo, $is_admin, true); } 
-    else { echo "<div class='text-danger text-center py-5'>> SYS_ERR: SIGNAL DECAYED OR PURGED.</div>"; }
-    echo "</div>"; exit;
+    if ($story) { 
+        render_echo_card($story, $pdo, $is_admin, false); 
+    } else { 
+        echo "<div class='text-danger text-center py-5'>> SYS_ERR: SIGNAL DECAYED OR PURGED.</div>"; 
+    }
+    exit;
 }
 
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
@@ -245,87 +242,102 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>COMMS: ECHO - Jeannes Bryan | NPC</title>
+    <title>COMMS: ECHO - Bunker</title>
     <meta name="theme-color" content="#030303">    
     <link rel="icon" type="image/svg+xml" href="../assets/npc-icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="stylesheet" href="../assets/terminal.css">
+    
     <style>
-        .thread-modal-dialog { width: 100%; max-width: 600px; background: var(--bg-card); border: 1px solid var(--text-main); box-shadow: 0 0 15px rgba(0,255,65,0.2); padding: 20px; overflow-y: auto; max-height: 90vh; }
-        .thread-item { position: relative; }
-        .thread-item::before { content: ''; position: absolute; left: -2px; top: 0; bottom: 0; width: 2px; background: var(--border-color); }
-        .thread-item:last-child::before { bottom: 50%; } 
+        /* CSS Tambahan khusus Layouting Media (Tetap dipertahankan karena layouting grid gambar butuh spesifik) */
+        .story-radar-container { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 8px; scrollbar-width: thin; }
+        .story-box { border: 1px solid var(--t-red); background: rgba(255,0,60,0.05); color: var(--t-red); padding: 10px 15px; cursor: pointer; transition: 0.2s; min-width: 140px; text-align: center; white-space: nowrap; flex-shrink: 0; }
+        .story-box:hover { background: var(--t-red); color: var(--bg-surface); box-shadow: 0 0 10px var(--t-red); }
         
-        .story-radar-container { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 4px; scrollbar-width: thin; }
-        .story-box { border: 1px solid var(--danger); background: rgba(255,0,60,0.05); color: var(--danger); padding: 10px 15px; cursor: pointer; transition: 0.2s; min-width: 140px; text-align: center; white-space: nowrap; flex-shrink: 0; }
-        .story-box:hover { background: var(--danger); color: var(--bg-dark); box-shadow: 0 0 10px var(--danger); }
-        .story-modal-dialog { border-color: var(--danger) !important; box-shadow: 0 0 15px rgba(255,0,60,0.2) !important; }
+        .echo-media-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .media-item.full-width { grid-column: 1 / -1; }
+        .media-item img { object-fit: cover; max-height: 400px; }
         
-        .btn-close-text { background: none; border: none; color: var(--danger); font-size: 2rem; line-height: 1; cursor: pointer; text-shadow: 0 0 5px var(--danger); padding: 0; }
+        /* Modifikasi Modal Image Zoom */
+        #imageZoomModal .t-modal-content { max-width: 90vw; max-height: 90vh; padding: 5px; background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #modalImage { max-width: 100%; max-height: 85vh; border: 1px solid var(--t-green); box-shadow: 0 0 20px rgba(0,255,65,0.2); }
+        
+        /* Input File Styling */
+        input[type="file"]::file-selector-button { background: transparent; color: var(--t-green); border: 1px solid var(--t-green-dim); padding: 4px 8px; font-family: inherit; font-size: 11px; cursor: pointer; margin-right: 10px; text-transform: uppercase; }
+        input[type="file"]::file-selector-button:hover { background: rgba(0, 255, 65, 0.1); border-color: var(--t-green); }
     </style>
 </head>
-<body>
-    <div class="container">
-        
-        <div class="text-center mb-3 mt-3">
-            <h1 class="mb-1 text-main">[ COMMS: ECHO_BROADCAST ]</h1>
-            <div class="text-muted">> STATUS: TRANSMITTING SIGNALS INTO THE VOID... <span class="blinking-cursor"></span></div>
+<body class="t-crt">
+
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
+            > DECRYPTING_ECHO_SIGNALS<span class="t-loading-dots"></span>
+        </div>
+    </div>
+
+    <div class="t-container t-box-lg">
+        <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3 mt-4">
+            <div>
+                <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> COMMS: ECHO_BROADCAST</h2>
+                <div class="text-muted fs-small mt-1">> STATUS: TRANSMITTING SIGNALS INTO THE VOID...</div>
+            </div>
+            <div>
+                <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Dashboard">[ ➜ ] RETURN_OS</a>
+            </div>
         </div>
 
         <?php if (count($active_stories) > 0): ?>
-        <div class="mt-2 mb-3 pt-3 pb-3" style="border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color);">
-            <div class="text-danger fs-small mb-2">> RADAR: ACTIVE VOLATILE SIGNALS DETECTED</div>
+        <div class="t-card warning mb-4">
+            <div class="t-card-header text-warning">> RADAR: ACTIVE VOLATILE SIGNALS DETECTED</div>
             <div class="story-radar-container">
                 <?php foreach($active_stories as $st): ?>
                     <div class="story-box" onclick="viewStory(<?= $st['id'] ?>)" title="Decrypt this payload">
-                        <div class="fw-bold fs-small">[ ECHO_LOG ]</div>
+                        <div class="font-bold fs-small">[ ECHO_LOG ]</div>
                         <div class="fs-small mt-1" style="opacity: 0.8;">> DECAYING...</div>
                     </div>
                 <?php endforeach; ?>
             </div>
         </div>
-        <?php else: ?>
-        <hr class="mt-2 mb-3">
         <?php endif; ?>
 
         <?php if ($is_admin): ?>
-        <form method="POST" enctype="multipart/form-data" class="mb-4 card p-3" id="echo-form">
-            <input type="hidden" name="action" value="add_post">
-            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-            <input type="hidden" name="parent_id" id="input-parent-id" value="">
-            
-            <div id="chain-indicator" class="alert-bunker p-2 mb-3 d-none d-flex justify-content-between align-items-center" style="border-color: var(--text-main); color: var(--text-main); background: rgba(0,255,65,0.05);">
-                <span class="fs-small">> ESTABLISHING SIGNAL CHAIN...</span>
-                <button type="button" class="btn btn-danger btn-sm p-1" onclick="cancelReply()">[ ABORT ]</button>
-            </div>
-
-            <div class="form-group">
-                <div id="payload-error" class="text-danger d-none fs-small mb-2">> SYS_ERR: CANNOT TRANSMIT EMPTY PAYLOAD.</div>
-                <textarea class="form-control" name="content" id="echo-textarea" placeholder="> ENTER_TRANSMISSION_DATA..."></textarea>
-            </div>
-            
-            <div class="form-group">
-                <input class="form-control text-muted mb-2" type="file" name="media[]" multiple accept="image/*, video/*">
+        <div class="t-card mb-5">
+            <div class="t-card-header">> COMPOSER_TERMINAL</div>
+            <form method="POST" enctype="multipart/form-data" id="echo-form" class="m-0">
+                <input type="hidden" name="action" value="add_post">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <input type="hidden" name="parent_id" id="input-parent-id" value="">
                 
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--danger); font-size: 0.85rem; margin-top: 10px;">
-                    <input type="checkbox" name="is_volatile" value="1" style="accent-color: var(--danger);">
-                    > [ WARNING ] MAKE SIGNAL VOLATILE (SELF-DESTRUCT IN 24H)
-                </label>
-            </div>
+                <div id="chain-indicator" class="t-alert warning d-none d-flex justify-content-between align-items-center mb-3 p-2">
+                    <span class="fs-small">> ESTABLISHING SIGNAL CHAIN...</span>
+                    <button type="button" class="t-btn danger t-btn-sm" onclick="cancelReply()">[ ABORT ]</button>
+                </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-main" id="btn-transmit">[ EXECUTE_BROADCAST ]</button>
-            </div>
-        </form>
-        <hr class="mb-4">
+                <div id="payload-error" class="text-danger d-none fs-small mb-2 t-flicker">> SYS_ERR: CANNOT TRANSMIT EMPTY PAYLOAD.</div>
+                
+                <textarea class="t-textarea" name="content" id="echo-textarea" placeholder="> ENTER_TRANSMISSION_DATA..." rows="4"></textarea>
+                
+                <input class="t-input fs-small text-muted mb-2" type="file" name="media[]" multiple accept="image/*, video/*">
+                
+                <label class="t-checkbox-label mt-2" style="color: var(--t-red);">
+                    <input type="checkbox" name="is_volatile" value="1">
+                    <span class="t-checkmark"></span> > [ WARNING ] MAKE SIGNAL VOLATILE (SELF-DESTRUCT IN 24H)
+                </label>
+
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="t-btn" id="btn-transmit">[ EXECUTE_BROADCAST ]</button>
+                </div>
+            </form>
+        </div>
         <?php endif; ?>
 
         <div id="echo-container"></div>
 
         <div class="mb-4 text-center d-none" id="load-more-container">
-            <button class="btn btn-main btn-block" type="button" id="btn-load-more" onclick="loadPosts()">[ SCAN_FOR_OLDER_SIGNALS ]</button>
+            <button class="t-btn t-btn-block" type="button" id="btn-load-more" onclick="loadPosts()">[ SCAN_FOR_OLDER_SIGNALS ]</button>
         </div>
         
         <div class="text-center mt-4 text-muted d-none mb-5" id="end-indicator" style="font-size: 0.85rem; letter-spacing: 1px;">
@@ -334,22 +346,26 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         
     </div>
 
-    <div id="imageZoomModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="btn-close-modal" id="closeModalBtn" title="Close">&times;</button>
+    <div id="imageZoomModal" class="t-modal">
+        <div class="t-modal-content">
+            <div class="text-right mb-2">
+                <button class="t-btn danger t-btn-sm" onclick="Terminal.modal.close('imageZoomModal')">[ X CLOSE ]</button>
+            </div>
             <img id="modalImage" src="" alt="Zoomed Echo">
         </div>
     </div>
 
-    <div id="threadModal" class="modal-overlay" style="align-items: flex-start; padding-top: 5vh;">
-        <div class="thread-modal-dialog" id="threadModalBox">
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" id="threadModalHeader">
-                <h3 class="mb-0 text-main" id="threadModalTitle">> SIGNAL_CHAIN</h3>
-                <button class="btn-close-text" id="closeThreadBtn" title="Close">&times;</button>
+    <div id="threadModal" class="t-modal">
+        <div class="t-modal-content" id="threadModalBox" style="max-width: 650px;">
+            <div class="t-card-header d-flex justify-content-between align-items-center" id="threadModalHeader">
+                <span id="threadModalTitle">> SIGNAL_CHAIN</span>
+                <button class="t-btn danger t-btn-sm" onclick="Terminal.modal.close('threadModal')">[ X CLOSE ]</button>
             </div>
             <div id="threadModalContent"></div>
         </div>
     </div>
+
+    <script src="../assets/terminal.js"></script>
 
     <script>
         let currentOffset = 0;
@@ -357,6 +373,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         const btnLoadMore = document.getElementById('btn-load-more');
         const endIndicator = document.getElementById('end-indicator');
 
+        // Form Validation
         const echoForm = document.getElementById('echo-form');
         if (echoForm) {
             echoForm.addEventListener('submit', function(e) {
@@ -369,10 +386,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                     errDiv.classList.remove('d-none');
                     textarea.focus();
                     setTimeout(() => errDiv.classList.add('d-none'), 3000);
+                } else {
+                    Terminal.splash.show('> EXECUTING_BROADCAST_PROTOCOL');
                 }
             });
         }
 
+        // Lazy Load Feed
         function loadPosts() {
             const originalText = btnLoadMore.innerHTML;
             btnLoadMore.innerHTML = '[ SCANNING_THE_VOID... ]';
@@ -387,7 +407,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                     } else {
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = data;
-                        const postCount = tempDiv.querySelectorAll('.card').length;
+                        const postCount = tempDiv.querySelectorAll('.t-card, .t-thread-item').length;
 
                         container.insertAdjacentHTML('beforeend', data);
                         currentOffset += 10; 
@@ -405,6 +425,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
         document.addEventListener('DOMContentLoaded', loadPosts);
 
+        // Reply / Chain Protocol
         function replyTo(id) {
             document.getElementById('input-parent-id').value = id;
             document.getElementById('chain-indicator').classList.remove('d-none');
@@ -416,21 +437,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             document.getElementById('chain-indicator').classList.add('d-none');
         }
 
-        const threadModal = document.getElementById('threadModal');
-        const threadModalBox = document.getElementById('threadModalBox');
-        const threadModalHeader = document.getElementById('threadModalHeader');
+        // Modals Setup
         const threadModalTitle = document.getElementById('threadModalTitle');
+        const threadModalHeader = document.getElementById('threadModalHeader');
         const threadContent = document.getElementById('threadModalContent');
-        const closeThreadBtn = document.getElementById('closeThreadBtn');
 
         function viewThread(parentId) {
-            threadModalBox.classList.remove('story-modal-dialog');
-            threadModalHeader.style.borderColor = 'var(--border-color)';
-            threadModalTitle.className = 'mb-0 text-main';
+            threadModalHeader.className = "t-card-header d-flex justify-content-between align-items-center text-success";
             threadModalTitle.innerText = '> SIGNAL_CHAIN';
             
-            threadContent.innerHTML = '<div class="text-center text-muted py-5">> DECRYPTING_SIGNAL_CHAIN... <span class="blinking-cursor"></span></div>';
-            threadModal.classList.add('active');
+            threadContent.innerHTML = '<div class="text-center text-muted py-5">> DECRYPTING_SIGNAL_CHAIN... <span class="t-spinner"></span></div>';
+            Terminal.modal.open('threadModal');
             
             fetch(`index.php?ajax_thread=1&parent_id=${parentId}`)
                 .then(res => res.text())
@@ -438,35 +455,25 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
 
         function viewStory(id) {
-            threadModalBox.classList.add('story-modal-dialog');
-            threadModalHeader.style.borderColor = 'var(--danger)';
-            threadModalTitle.className = 'mb-0 text-danger';
+            threadModalHeader.className = "t-card-header d-flex justify-content-between align-items-center text-danger";
             threadModalTitle.innerText = '> VOLATILE_PAYLOAD_DECRYPTED';
             
-            threadContent.innerHTML = '<div class="text-center text-danger py-5">> DECRYPTING_VOLATILE_DATA... <span class="blinking-cursor"></span></div>';
-            threadModal.classList.add('active');
+            threadContent.innerHTML = '<div class="text-center text-danger py-5 t-flicker">> DECRYPTING_VOLATILE_DATA... <span class="t-spinner"></span></div>';
+            Terminal.modal.open('threadModal');
             
             fetch(`index.php?ajax_story=1&story_id=${id}`)
                 .then(res => res.text())
                 .then(html => { threadContent.innerHTML = html; });
         }
-        
-        closeThreadBtn.addEventListener('click', () => threadModal.classList.remove('active'));
-        threadModal.addEventListener('click', (e) => {
-            if (e.target === threadModal) threadModal.classList.remove('active');
-        });
 
-        const imageModal = document.getElementById('imageZoomModal');
+        // Image Zoom Protocol
         const modalImg = document.getElementById('modalImage');
-        const closeImageBtn = document.getElementById('closeModalBtn');
-
         document.addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('zoomable-image')) {
                 modalImg.src = e.target.getAttribute('src');
-                imageModal.classList.add('active');
+                Terminal.modal.open('imageZoomModal');
             }
         });
-        closeImageBtn.addEventListener('click', () => imageModal.classList.remove('active'));
     </script>
 </body>
 </html>
