@@ -52,7 +52,8 @@ function format_indo_date($datetime) {
 
 function parse_echo_embeds($text) {
     $text = preg_replace('~(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\S+)?~i', '<div class="mt-2 mb-2"><iframe width="100%" height="315" style="border:1px dashed var(--t-green-dim);" src="https://www.youtube.com/embed/$1" allowfullscreen></iframe></div>', $text);
-    $text = preg_replace('~(?<!src=")(https?://[^\s]+(?:\.jpg|\.jpeg|\.png|\.gif|\.webp))~i', '<img src="$1" class="echo-media zoomable-image mt-2 mb-2" title="[ CLICK TO ENLARGE ]" alt="Attached Data">', $text);
+    // [MODIFIKASI]: Menambahkan class t-retro-filter ke embed gambar URL
+    $text = preg_replace('~(?<!src=")(https?://[^\s]+(?:\.jpg|\.jpeg|\.png|\.gif|\.webp))~i', '<img src="$1" class="echo-media zoomable-image mt-2 mb-2 t-retro-filter" style="border: 1px dashed var(--t-green-dim);" title="[ CLICK TO ENLARGE ]" alt="Attached Data">', $text);
     $text = preg_replace('~(?<!src="|")\b(https?://[^\s<]+)\b~i', '<a href="$1" target="_blank" style="color:var(--t-green); text-decoration:underline dashed;">[LINK: $1]</a>', $text);
     return $text;
 }
@@ -109,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// FUNGSI RENDER (Dirombak untuk Terminal UI)
-function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
+// [MODIFIKASI]: Menambahkan argumen $in_modal agar tombol decypt bisa disembunyikan
+function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false, $in_modal = false) {
     $video_extensions = ['mp4', 'webm', 'ogg'];
     $media_stmt = $pdo->prepare("SELECT file_name FROM post_media WHERE post_id = ?");
     $media_stmt->execute([$post['id']]);
@@ -123,7 +124,6 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
         $child_count = $child_stmt->fetchColumn();
     }
     
-    // Tentukan class parent (Card biasa atau bagian dari Thread Connector)
     $wrapper_class = $is_thread_view ? 't-thread-item' : 't-card mb-4';
     $volatile_class = !empty($post['expires_at']) ? 'danger' : '';
     ?>
@@ -138,7 +138,7 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
 
         <div class="d-flex justify-content-between align-items-start mb-3 t-border-bottom pb-2">
             <div class="d-flex gap-3 align-items-center">
-                <img src="../assets/jeannesbryan.webp" width="45" height="45" alt="Avatar" style="border: 1px solid var(--t-green-dim); filter: grayscale(1) sepia(0.5) hue-rotate(80deg);">
+                <img src="../assets/jeannesbryan.webp" width="45" height="45" alt="Avatar" class="t-retro-filter" style="border: 1px solid var(--t-green-dim);">
                 <div>
                     <div class="font-bold text-success">ENTITY_ID: JEANNES_BRYAN <span class="text-muted fw-normal fs-small">&#x25CF; [AUTHOR]</span></div>
                     <div class="text-muted fs-small">> LOG_DATE: <?= format_indo_date($post['created_at']) ?></div>
@@ -179,14 +179,14 @@ function render_echo_card($post, $pdo, $is_admin, $is_thread_view = false) {
                                 <source src="uploads/<?= $media['file_name'] ?>" type="video/<?= $file_ext === 'mkv' ? 'webm' : $file_ext ?>">
                             </video>
                         <?php else: ?>
-                            <img src="uploads/<?= $media['file_name'] ?>" class="echo-media zoomable-image w-100" title="[ ENLARGE_VISUAL ]" alt="Attached Data" style="cursor: pointer; border: 1px dashed var(--t-green-dim); filter: grayscale(0.5) sepia(0.5);">
+                            <img src="uploads/<?= $media['file_name'] ?>" class="echo-media zoomable-image w-100 t-retro-filter" title="[ ENLARGE_VISUAL ]" alt="Attached Data" style="cursor: pointer; border: 1px dashed var(--t-green-dim);">
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
 
-        <?php if ($child_count > 0 && !$is_thread_view): ?>
+        <?php if ($child_count > 0 && !$is_thread_view && !$in_modal): ?>
             <button class="t-btn t-btn-sm w-100 mt-3" onclick="viewThread(<?= $post['id'] ?>)">
                 &#x21B3; [ DECRYPT <?= $child_count ?> LINKED SIGNALS ]
             </button>
@@ -204,8 +204,8 @@ if (isset($_GET['ajax_thread']) && $_GET['ajax_thread'] == '1') {
     $stmt = $pdo->prepare("SELECT * FROM posts WHERE parent_id = ? ORDER BY created_at ASC"); $stmt->execute([$parent_id]);
     $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Menggunakan t-thread dari Terminal UI
-    if ($parent_post) render_echo_card($parent_post, $pdo, $is_admin, false);
+    // [MODIFIKASI]: Mengirimkan argumen $in_modal = true agar parent post tidak me-render tombol decrypt
+    if ($parent_post) render_echo_card($parent_post, $pdo, $is_admin, false, true);
     
     echo "<div class='t-thread mt-4'>";
     foreach ($children as $child) { render_echo_card($child, $pdo, $is_admin, true); }
@@ -218,7 +218,7 @@ if (isset($_GET['ajax_story']) && $_GET['ajax_story'] == '1') {
     $story = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($story) { 
-        render_echo_card($story, $pdo, $is_admin, false); 
+        render_echo_card($story, $pdo, $is_admin, false, true); 
     } else { 
         echo "<div class='text-danger text-center py-5'>> SYS_ERR: SIGNAL DECAYED OR PURGED.</div>"; 
     }
@@ -252,7 +252,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     <link rel="stylesheet" href="../assets/terminal.css">
     
     <style>
-        /* CSS Tambahan khusus Layouting Media (Tetap dipertahankan karena layouting grid gambar butuh spesifik) */
         .story-radar-container { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 8px; scrollbar-width: thin; }
         .story-box { border: 1px solid var(--t-red); background: rgba(255,0,60,0.05); color: var(--t-red); padding: 10px 15px; cursor: pointer; transition: 0.2s; min-width: 140px; text-align: center; white-space: nowrap; flex-shrink: 0; }
         .story-box:hover { background: var(--t-red); color: var(--bg-surface); box-shadow: 0 0 10px var(--t-red); }
@@ -261,11 +260,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         .media-item.full-width { grid-column: 1 / -1; }
         .media-item img { object-fit: cover; max-height: 400px; }
         
-        /* Modifikasi Modal Image Zoom */
+        /* Modal Image Zoom (Dipertahankan CSS-nya karena Zoom sifatnya spesifik ke layarnya) */
         #imageZoomModal .t-modal-content { max-width: 90vw; max-height: 90vh; padding: 5px; background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #modalImage { max-width: 100%; max-height: 85vh; border: 1px solid var(--t-green); box-shadow: 0 0 20px rgba(0,255,65,0.2); }
         
-        /* Input File Styling */
         input[type="file"]::file-selector-button { background: transparent; color: var(--t-green); border: 1px solid var(--t-green-dim); padding: 4px 8px; font-family: inherit; font-size: 11px; cursor: pointer; margin-right: 10px; text-transform: uppercase; }
         input[type="file"]::file-selector-button:hover { background: rgba(0, 255, 65, 0.1); border-color: var(--t-green); }
     </style>
