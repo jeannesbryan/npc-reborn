@@ -3,7 +3,7 @@ session_start();
 date_default_timezone_set('Asia/Jakarta');
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: ../bunker/index.php");
+    header("Location: ../bunker/index.php"); // Atau ke index login Anda
     exit;
 }
 
@@ -20,7 +20,7 @@ try {
     die("> SYS_ERR: FAILED TO CONNECT TO INDEX CLUSTER. HAVE YOU RUN THE INIT SCRIPT?");
 }
 
-// Handler: Tambah Bookmark
+// 1. Handler: Tambah Bookmark
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_bookmark') {
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) die("> SYS_ERR: AUTHENTICATION FAILED.");
     
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handler: Edit Bookmark
+// 2. Handler: Edit Bookmark
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit_bookmark') {
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) die("> SYS_ERR: AUTHENTICATION FAILED.");
     
@@ -61,12 +61,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handler: Hapus Bookmark
+// 3. Handler: Hapus 1 Bookmark
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_bookmark') {
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) die("> SYS_ERR: AUTHENTICATION FAILED.");
     
     $id = (int)$_POST['id'];
     $pdo->prepare("DELETE FROM bookmarks WHERE id = ?")->execute([$id]);
+    header("Location: index.php");
+    exit;
+}
+
+// 4. NEW Handler: Hapus 1 Kategori Penuh (Mass Purge)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_category') {
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) die("> SYS_ERR: AUTHENTICATION FAILED.");
+    
+    $category = trim($_POST['category'] ?? '');
+    if (!empty($category)) {
+        $stmt = $pdo->prepare("DELETE FROM bookmarks WHERE category = ?");
+        $stmt->execute([$category]);
+    }
     header("Location: index.php");
     exit;
 }
@@ -98,100 +111,101 @@ foreach ($all_bookmarks as $bm) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="stylesheet" href="../assets/terminal.css">
+    
     <style>
-        .cluster-grid { column-width: 300px; column-gap: 20px; }
-        .cluster-card { background: rgba(0,255,65,0.02); border: 1px solid var(--border-color); padding: 15px; break-inside: avoid; margin-bottom: 20px; display: inline-block; width: 100%; }
-        .cluster-header { color: var(--text-main); font-weight: bold; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; margin-bottom: 12px; }
-        .bookmark-item { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .bookmark-link { color: var(--text-main); text-decoration: none; word-break: break-word; font-size: 0.95rem; padding-right: 10px; }
-        .bookmark-link:hover { color: var(--light); text-shadow: 0 0 8px var(--text-main); }
-        .bookmark-link::before { content: '[>] '; opacity: 0.7; }
-        
-        .action-btns { display: flex; gap: 8px; flex-shrink: 0; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: 0.2s; backdrop-filter: blur(3px); }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-dialog { width: 100%; max-width: 500px; background: var(--bg-card); border: 1px solid var(--text-main); box-shadow: 0 0 15px rgba(0,255,65,0.2); padding: 20px; }
-        
-        /* Styling Search Bar CLI */
-        .cli-search { border: none; border-bottom: 1px solid var(--text-main); border-radius: 0; background: transparent; padding-left: 0; color: var(--text-main); box-shadow: none !important; }
-        .cli-search:focus { background: transparent; color: var(--text-main); border-bottom: 1px solid var(--light); }
-        .cli-search::placeholder { color: var(--text-muted); opacity: 0.5; }
+        /* Styling mikro untuk link agar lebih retro */
+        .bookmark-link::before { content: '[>] '; opacity: 0.5; color: var(--t-green-dim); }
+        .bookmark-link:hover::before { opacity: 1; color: var(--t-green); }
     </style>
 </head>
-<body>
-    <div class="container">
+<body class="t-crt">
+    
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
+            > MOUNTING_INDEX_DIRECTORIES<span class="t-loading-dots"></span>
+        </div>
+    </div>
+
+    <div class="t-container-fluid pt-0">
         
-        <div class="d-flex justify-content-between align-items-center pb-3 mt-4 mb-4 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3 mt-4 flex-wrap gap-3">
             <div>
-                <h2 class="mb-0 text-main">[ NAV: INDEX_DIRECTORIES ]</h2>
-                <div class="text-muted fs-small mt-1">> STATUS: MEMORY BANK ACCESSED... <span class="blinking-cursor"></span></div>
+                <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> NAV: INDEX_DIRECTORIES</h2>
+                <div class="text-muted fs-small mt-1">> STATUS: MEMORY BANK ACCESSED... <span class="t-blink">_</span></div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-danger">[ RETURN_TO_BUNKER ]</a>
+            <div>
+                <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Dashboard">[ ➜ ] RETURN_OS</a>
+            </div>
         </div>
 
-        <div class="card p-3 mb-4">
-            <h4 class="mb-3 fs-small">> INJECT_NEW_COORDINATES</h4>
-            <form method="POST" style="margin: 0;">
+        <div class="t-card mb-4">
+            <h4 class="mb-3 fs-small text-success">> INJECT_NEW_COORDINATES</h4>
+            <form method="POST" class="m-0">
                 <input type="hidden" name="action" value="add_bookmark">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 
-                <div class="row" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 200px;">
-                        <input type="text" class="form-control" name="title" placeholder="Link Title (e.g. GitHub)" required>
-                    </div>
-                    <div style="flex: 1.5; min-width: 200px;">
-                        <input type="url" class="form-control" name="url" placeholder="URL (e.g. https://github.com)" required>
-                    </div>
-                    <div style="flex: 1; min-width: 150px;">
-                        <input type="text" class="form-control" name="category" list="category-list" placeholder="Dir / Category" required autocomplete="off">
+                <div class="d-flex flex-wrap gap-2">
+                    <input type="text" class="t-input m-0" name="title" placeholder="> TITLE (e.g. GitHub)" required style="flex: 1; min-width: 200px;">
+                    <input type="url" class="t-input m-0" name="url" placeholder="> URL_TARGET (https://...)" required style="flex: 1.5; min-width: 200px;">
+                    <div class="d-flex gap-2" style="flex: 1; min-width: 250px;">
+                        <input type="text" class="t-input m-0" name="category" list="category-list" placeholder="> DIRECTORY / CAT" required autocomplete="off" style="width: 100%;">
                         <datalist id="category-list">
                             <?php foreach($unique_categories as $c): ?>
                                 <option value="<?= htmlspecialchars($c) ?>">
                             <?php endforeach; ?>
                         </datalist>
-                    </div>
-                    <div>
-                        <button type="submit" class="btn btn-main btn-block">[ INJECT ]</button>
+                        <button type="submit" class="t-btn font-bold t-glow">[ INJECT ]</button>
                     </div>
                 </div>
             </form>
         </div>
 
         <?php if (count($clusters) > 0): ?>
-        <div class="card p-3 mb-5" style="border-style: dashed; background: rgba(0,255,65,0.02);">
+        <div class="t-card mb-4 p-3" style="background: rgba(0,255,65,0.02); border-style: dashed;">
             <div class="d-flex align-items-center gap-2">
-                <span class="text-main">></span>
-                <input type="text" id="live-search" class="form-control cli-search" placeholder="QUERY_MEMORY_BANK... (Search by title, url, or directory)">
+                <span class="text-success font-bold">></span>
+                <input type="text" id="live-search" class="t-input m-0 p-0 border-0" placeholder="QUERY_MEMORY_BANK... (Search by title, url, or directory)" style="box-shadow: none;">
             </div>
         </div>
         <?php endif; ?>
 
         <?php if (count($clusters) > 0): ?>
-            <div class="cluster-grid" id="cluster-container">
+            <div class="t-masonry" id="cluster-container">
                 <?php foreach ($clusters as $category => $bookmarks): ?>
-                    <div class="cluster-card">
-                        <div class="cluster-header">> DIR: <span class="cat-name"><?= htmlspecialchars($category) ?></span></div>
+                    
+                    <div class="t-masonry-item t-card p-3 cluster-card mb-4" style="background: rgba(0,255,65,0.01);">
+                        <div class="d-flex justify-content-between align-items-center t-border-bottom pb-2 mb-3">
+                            <div class="font-bold text-success">> DIR: <span class="cat-name"><?= htmlspecialchars($category) ?></span></div>
+                            
+                            <form method="POST" onsubmit="return confirm('> CRITICAL WARNING!\n\nThis will purge directory [ <?= htmlspecialchars($category, ENT_QUOTES) ?> ] and ALL coordinates inside it permanently.\n\nPROCEED?');" class="m-0">
+                                <input type="hidden" name="action" value="delete_category">
+                                <input type="hidden" name="category" value="<?= htmlspecialchars($category) ?>">
+                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                <button type="submit" class="t-btn danger t-btn-sm" title="Purge Entire Directory">[ X PURGE_DIR ]</button>
+                            </form>
+                        </div>
                         
                         <?php foreach ($bookmarks as $bm): ?>
-                            <div class="bookmark-item">
-                                <a href="<?= htmlspecialchars($bm['url']) ?>" target="_blank" class="bookmark-link" title="<?= htmlspecialchars($bm['url']) ?>">
+                            <div class="d-flex justify-content-between align-items-start mb-2 bookmark-item">
+                                <a href="<?= htmlspecialchars($bm['url']) ?>" target="_blank" class="text-success bookmark-link" style="text-decoration: underline dashed; font-size: 13px; word-break: break-word; padding-right: 10px; line-height: 1.4;">
                                     <?= htmlspecialchars($bm['title']) ?>
                                 </a>
-                                <div class="action-btns">
-                                    <button type="button" class="btn btn-main btn-sm" 
+                                
+                                <div class="d-flex gap-1 flex-shrink-0">
+                                    <button type="button" class="t-btn t-btn-sm" 
                                         data-id="<?= $bm['id'] ?>" 
-                                        data-title="<?= htmlspecialchars($bm['title']) ?>" 
-                                        data-url="<?= htmlspecialchars($bm['url']) ?>" 
-                                        data-category="<?= htmlspecialchars($bm['category']) ?>" 
+                                        data-title="<?= htmlspecialchars($bm['title'], ENT_QUOTES) ?>" 
+                                        data-url="<?= htmlspecialchars($bm['url'], ENT_QUOTES) ?>" 
+                                        data-category="<?= htmlspecialchars($bm['category'], ENT_QUOTES) ?>" 
                                         onclick="openEditModal(this)" title="Edit Link">[EDIT]</button>
                                     
-                                    <form method="POST" onsubmit="return confirm('WARNING: Delete [ <?= htmlspecialchars($bm['title']) ?> ] from database?');" style="margin: 0;">
+                                    <form method="POST" onsubmit="return confirm('Purge coordinate [ <?= htmlspecialchars($bm['title'], ENT_QUOTES) ?> ]?');" class="m-0">
                                         <input type="hidden" name="action" value="delete_bookmark">
                                         <input type="hidden" name="id" value="<?= $bm['id'] ?>">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Purge Link">[X]</button>
+                                        <button type="submit" class="t-btn danger t-btn-sm" title="Purge Link">[X]</button>
                                     </form>
                                 </div>
                             </div>
@@ -201,12 +215,12 @@ foreach ($all_bookmarks as $bm) {
                 <?php endforeach; ?>
             </div>
             
-            <div id="search-empty-state" class="text-center text-danger mt-4 d-none">
+            <div id="search-empty-state" class="text-center text-danger mt-4 mb-5 d-none t-flicker">
                 > SYS_ERR: NO COORDINATES MATCH YOUR QUERY.
             </div>
 
         <?php else: ?>
-            <div class="text-center text-muted mt-5 mb-5 py-5" style="border: 1px dashed var(--border-color);">
+            <div class="t-card text-center text-muted mt-5 mb-5 py-5" style="border-style: dashed;">
                 > MEMORY BANK EMPTY. NO COORDINATES DETECTED.<br>
                 <span class="fs-small">Awaiting initial injection...</span>
             </div>
@@ -214,43 +228,44 @@ foreach ($all_bookmarks as $bm) {
 
     </div>
 
-    <div id="editModal" class="modal-overlay">
-        <div class="modal-dialog">
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                <h3 class="mb-0 text-main">> MODIFY_COORDINATES</h3>
+    <div id="editModal" class="t-modal">
+        <div class="t-modal-content">
+            <div class="t-card-header d-flex justify-content-between align-items-center">
+                <span class="text-success">> MODIFY_COORDINATES</span>
+                <button class="t-btn danger t-btn-sm" onclick="Terminal.modal.close('editModal')">[ X ]</button>
             </div>
-            <form method="POST" style="margin: 0;">
+            
+            <form method="POST" class="m-0">
                 <input type="hidden" name="action" value="edit_bookmark">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="id" id="edit-id">
                 
-                <div class="form-group mb-3">
-                    <label class="text-muted fs-small mb-1">> TITLE</label>
-                    <input type="text" class="form-control" name="title" id="edit-title" required>
-                </div>
-                <div class="form-group mb-3">
-                    <label class="text-muted fs-small mb-1">> URL_TARGET</label>
-                    <input type="url" class="form-control" name="url" id="edit-url" required>
-                </div>
-                <div class="form-group mb-4">
-                    <label class="text-muted fs-small mb-1">> DIRECTORY / CLUSTER</label>
-                    <input type="text" class="form-control" name="category" id="edit-category" list="category-list-modal" required autocomplete="off">
-                    <datalist id="category-list-modal">
-                        <?php foreach($unique_categories as $c): ?>
-                            <option value="<?= htmlspecialchars($c) ?>">
-                        <?php endforeach; ?>
-                    </datalist>
-                </div>
+                <label class="t-form-label">> TITLE</label>
+                <input type="text" class="t-input" name="title" id="edit-title" required>
                 
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-danger" onclick="closeEditModal()">[ ABORT ]</button>
-                    <button type="submit" class="btn btn-main">[ EXECUTE_OVERRIDE ]</button>
+                <label class="t-form-label">> URL_TARGET</label>
+                <input type="url" class="t-input" name="url" id="edit-url" required>
+                
+                <label class="t-form-label">> DIRECTORY / CLUSTER</label>
+                <input type="text" class="t-input" name="category" id="edit-category" list="category-list-modal" required autocomplete="off">
+                
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="t-btn danger" onclick="Terminal.modal.close('editModal')">[ ABORT ]</button>
+                    <button type="submit" class="t-btn t-glow font-bold">[ EXECUTE_OVERRIDE ]</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <script src="../assets/terminal.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof Terminal !== 'undefined' && Terminal.splash) {
+                Terminal.splash.close(1000); // Tutup splash screen sedikit lebih cepat
+            }
+        });
+
+        // Live Search Script
         const searchInput = document.getElementById('live-search');
         if (searchInput) {
             searchInput.addEventListener('input', function() {
@@ -277,6 +292,7 @@ foreach ($all_bookmarks as $bm) {
                         }
                     });
 
+                    // Karena menggunakan Masonry, kita menggunakan inline-block
                     if (clusterHasMatch) {
                         cluster.style.display = 'inline-block';
                     } else {
@@ -292,25 +308,16 @@ foreach ($all_bookmarks as $bm) {
             });
         }
 
-        const modal = document.getElementById('editModal');
-
+        // Script Modal Terminal UI
         function openEditModal(button) {
             document.getElementById('edit-id').value = button.getAttribute('data-id');
             document.getElementById('edit-title').value = button.getAttribute('data-title');
             document.getElementById('edit-url').value = button.getAttribute('data-url');
             document.getElementById('edit-category').value = button.getAttribute('data-category');
-            modal.classList.add('active');
+            
+            // Buka modal pakai script bawaan framework
+            Terminal.modal.open('editModal');
         }
-
-        function closeEditModal() {
-            modal.classList.remove('active');
-        }
-
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeEditModal();
-            }
-        });
     </script>
 </body>
 </html>

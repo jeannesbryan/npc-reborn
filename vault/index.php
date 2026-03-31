@@ -3,7 +3,7 @@ session_start();
 date_default_timezone_set('Asia/Jakarta');
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: ../bunker/index.php");
+    header("Location: ../index.php");
     exit;
 }
 ?>
@@ -19,118 +19,130 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/style.css">
+    
+    <link rel="stylesheet" href="../assets/terminal.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
     <style>
-        .vault-container { max-width: 800px; margin: 0 auto; }
+        /* Logic Visibility Pane */
         .pane { display: none; }
-        .pane.active { display: block; }
-        
-        .item-card { background: var(--bg-dark); border: 1px solid var(--border-color); padding: 20px; margin-bottom: 15px; border-left: 3px solid var(--text-muted); }
-        .item-card.type-password { border-left-color: var(--text-main); }
-        
-        .item-title { font-weight: bold; font-size: 1.1rem; color: var(--text-main); display: flex; justify-content: space-between; cursor: pointer; }
-        .item-content { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); display: none; color: var(--light); font-family: monospace; word-break: break-all; line-height: 1.5; }
-        
-        .badge { font-size: 0.7rem; padding: 2px 6px; border: 1px solid; border-radius: 3px; }
-        .badge-note { color: var(--text-muted); border-color: var(--text-muted); }
-        .badge-pass { color: var(--text-main); border-color: var(--text-main); }
-        
-        /* Efek Blur Sensor & Copy */
+        .pane.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* Fitur Sensor & Copy khusus Vault */
         .blur-text { filter: blur(6px); cursor: copy; transition: 0.2s; background: rgba(0,255,65,0.1); padding: 2px 5px; border-radius: 3px; user-select: none; }
         .blur-text:hover { filter: blur(0); }
         
         .copy-target { cursor: copy; transition: 0.2s; padding: 2px 5px; border-radius: 3px; }
-        .copy-target:hover { background: rgba(0,255,65,0.1); color: var(--text-main) !important; text-shadow: 0 0 5px var(--text-main); }
+        .copy-target:hover { background: rgba(0,255,65,0.1); color: var(--t-green) !important; text-shadow: 0 0 5px var(--t-green); }
 
-        .form-control { box-sizing: border-box; }
-        
         #password-fields, #edit-password-fields { display: none; margin-top: 15px; }
 
         /* Search Bar CLI */
-        .cli-search { border: none; border-bottom: 1px dashed var(--text-main); border-radius: 0; background: transparent; padding-left: 0; color: var(--text-main); box-shadow: none !important; font-family: monospace; font-size: 1.1rem; }
-        .cli-search:focus { background: transparent; color: var(--light); border-bottom: 1px solid var(--light); }
-        .cli-search::placeholder { color: var(--text-muted); opacity: 0.5; }
-
-        /* Modal Edit Styling */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: 0.2s; backdrop-filter: blur(3px); }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-dialog { width: 100%; max-width: 600px; background: var(--bg-dark); border: 1px solid var(--text-main); box-shadow: 0 0 15px rgba(0,255,65,0.1); padding: 30px; }
+        .cli-search { border: none; border-bottom: 1px dashed var(--t-green); border-radius: 0; background: transparent; padding-left: 0; color: var(--t-green); font-family: monospace; font-size: 1.1rem; }
+        .cli-search:focus { background: transparent; color: #fff; border-bottom: 1px solid var(--t-green); box-shadow: none; }
+        .cli-search::placeholder { color: var(--t-green-dim); opacity: 0.5; }
     </style>
 </head>
-<body>
-    <div class="container vault-container">
+<body class="t-crt">
+
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
+            > INITIALIZING_SECURE_VAULT<span class="t-loading-dots"></span>
+        </div>
+    </div>
+
+    <div class="t-container pt-0 mt-4">
         
-        <div class="d-flex justify-content-between align-items-center pb-3 mt-4 mb-4 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3 mt-4">
             <div>
-                <h2 class="mb-0 text-main">[ SECURE_VAULT ]</h2>
+                <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> SECURE: VAULT</h2>
                 <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE ENCRYPTION ENABLED.</div>
             </div>
-            <a href="../bunker/dashboard.php" class="btn btn-danger btn-icon" title="Return to Bunker">[ ⬅ ]</a>
+            <div>
+                <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Dashboard">[ ➜ ] RETURN_OS</a>
+            </div>
         </div>
 
-        <div id="pane-setup" class="pane card mb-4 p-4 text-center" style="border-color: var(--text-main);">
-            <h3 class="text-main mb-3">> PROTOCOL: COLD START</h3>
+        <div id="pane-setup" class="pane t-card mb-4 text-center p-4">
+            <h3 class="text-success mb-3">> PROTOCOL: COLD START</h3>
             <p class="text-muted fs-small mb-4">Unrecognized terminal. Inject GitHub coordinates to establish secure connection.</p>
             
-            <div style="max-width: 450px; margin: 0 auto; text-align: left;">
-                <div class="form-group mb-3">
-                    <label class="text-muted fs-small mb-1">> GITHUB_PAT_TOKEN</label>
-                    <input type="password" id="setup-token" class="form-control" style="letter-spacing: 1px; padding: 10px 15px;" placeholder="ghp_xxxxxxxxxxxx...">
-                </div>
-                <div class="form-group mb-4">
-                    <label class="text-muted fs-small mb-1">> GIST_ID</label>
-                    <input type="text" id="setup-gist" class="form-control" style="letter-spacing: 1px; padding: 10px 15px;" placeholder="8a7b6c5d4...">
-                </div>
-                <button onclick="saveSetup()" class="btn btn-main btn-block mb-2">[ INJECT_COORDINATES ]</button>
+            <div class="t-center-box text-left">
+                <label class="t-form-label">> GITHUB_PAT_TOKEN</label>
+                <input type="password" id="setup-token" class="t-input mb-3" style="letter-spacing: 1px;" placeholder="ghp_xxxxxxxxxxxx...">
+                
+                <label class="t-form-label">> GIST_ID</label>
+                <input type="text" id="setup-gist" class="t-input mb-4" style="letter-spacing: 1px;" placeholder="8a7b6c5d4...">
+                
+                <button onclick="saveSetup()" class="t-btn t-btn-block font-bold t-glow">[ INJECT_COORDINATES ]</button>
             </div>
         </div>
 
-        <div id="pane-unlock" class="pane card mb-4 p-4 text-center" style="border-color: var(--text-main);">
-            <h3 class="mb-3 text-main">> VAULT LOCKED</h3>
-            <p class="text-muted fs-small mb-4">Terminal linked. Awaiting Master Decryption Key.</p>
+        <div id="pane-unlock" class="pane t-card mb-4 text-center p-4">
+            <h3 class="mb-3 text-danger t-flicker">> VAULT_LOCKED</h3>
+            <p class="text-muted fs-small mb-4">Terminal linked to Satellite. Awaiting Master Decryption Key.</p>
             
-            <div class="form-group mb-4" style="max-width: 400px; margin: 0 auto;">
-                <input type="password" id="master-password" class="form-control text-main border-secondary" style="text-align: center; letter-spacing: 2px; font-weight: bold; width: 100%; padding: 10px 15px;" placeholder="ENTER MASTER PASSWORD..." onkeypress="if(event.key === 'Enter') unlockVault()">
-            </div>
-            
-            <button onclick="unlockVault()" id="btn-unlock" class="btn btn-main" style="max-width: 400px; width: 100%;">[ DECRYPT_PAYLOAD ]</button>
-            
-            <div class="mt-4 border-top pt-4 pb-2">
-                <button onclick="purgeSetup()" class="btn btn-danger btn-sm">> PURGE_TERMINAL_LINK</button>
+            <div class="t-center-box">
+                <input type="password" id="master-password" class="t-input text-center text-success font-bold mb-4" style="letter-spacing: 2px; font-size: 1.2rem;" placeholder="ENTER MASTER PASSWORD..." onkeypress="if(event.key === 'Enter') unlockVault()">
+                
+                <button onclick="unlockVault()" id="btn-unlock" class="t-btn t-btn-block font-bold t-glow">[ DECRYPT_PAYLOAD ]</button>
+                
+                <div class="mt-5 t-border-top pt-4 pb-2">
+                    <button onclick="purgeSetup()" class="t-btn danger t-btn-sm mt-3">> PURGE_TERMINAL_LINK</button>
+                </div>
             </div>
         </div>
 
         <div id="pane-vault" class="pane">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <button onclick="lockVault()" class="btn btn-danger btn-sm">[ LOCK_VAULT ]</button>
-                <button onclick="toggleAddForm()" class="btn btn-main btn-icon" title="Add Entry">➕</button>
+                <button onclick="toggleAddForm()" class="t-btn font-bold t-glow">[ + ADD_NEW_PAYLOAD ]</button>
+                <button onclick="lockVault()" class="t-btn danger t-btn-sm">[ LOCK_VAULT ]</button>
             </div>
 
-            <div id="add-form" class="card p-4 mb-4" style="display: none; border-color: var(--text-main); background: rgba(0,255,65,0.02);">
-                <div class="d-flex gap-3 mb-3" style="flex-wrap: wrap;">
-                    <select id="entry-type" class="form-control" style="width: 150px; padding: 10px;" onchange="toggleFormMode()">
-                        <option value="NOTE">NOTE</option>
-                        <option value="PASSWORD">PASSWORD</option>
-                    </select>
-                    <input type="text" id="entry-title" class="form-control" placeholder="Title (e.g., ProtonMail, Debian Server)" style="flex: 1; padding: 10px 15px; min-width: 200px;">
+            <div id="add-form" class="t-card mb-4" style="display: none; background: rgba(0,255,65,0.02);">
+                <div class="t-card-header">> ENCRYPT_NEW_DATA</div>
+                
+                <div class="d-flex gap-3 mb-3 flex-wrap">
+                    <div style="width: 150px;">
+                        <label class="t-form-label">> TYPE</label>
+                        <select id="entry-type" class="t-select m-0" onchange="toggleFormMode()">
+                            <option value="NOTE">NOTE</option>
+                            <option value="PASSWORD">PASSWORD</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <label class="t-form-label">> TITLE</label>
+                        <input type="text" id="entry-title" class="t-input m-0" placeholder="e.g., ProtonMail, Debian Server">
+                    </div>
                 </div>
                 
                 <div id="password-fields">
-                    <div class="d-flex gap-3 mb-3" style="flex-wrap: wrap;">
-                        <input type="text" id="entry-email" class="form-control" placeholder="ID / Email" style="flex: 1; padding: 10px 15px; min-width: 150px;">
-                        <input type="url" id="entry-url" class="form-control" placeholder="URL Target (Optional)" style="flex: 1; padding: 10px 15px; min-width: 150px;">
-                        <input type="text" id="entry-pass" class="form-control" placeholder="The Password" style="flex: 1; padding: 10px 15px; min-width: 150px;">
+                    <div class="d-flex gap-3 mb-3 flex-wrap">
+                        <div style="flex: 1; min-width: 150px;">
+                            <label class="t-form-label">> ID / EMAIL</label>
+                            <input type="text" id="entry-email" class="t-input m-0" placeholder="Identify...">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label class="t-form-label">> URL_TARGET</label>
+                            <input type="url" id="entry-url" class="t-input m-0" placeholder="https://...">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label class="t-form-label">> PASSWORD</label>
+                            <input type="text" id="entry-pass" class="t-input m-0" placeholder="The Password">
+                        </div>
                     </div>
                 </div>
 
-                <textarea id="entry-content" class="form-control mb-4" rows="4" style="padding: 15px; margin-top: 15px;" placeholder="Notes / Detail payload..."></textarea>
-                <button onclick="saveEntry()" class="btn btn-main btn-block" id="btn-save">[ ENCRYPT & UPLOAD ]</button>
+                <label class="t-form-label mt-3">> PRIVATE_NOTES / DETAILS</label>
+                <textarea id="entry-content" class="t-textarea mb-4" rows="3" placeholder="Details..."></textarea>
+                
+                <button onclick="saveEntry()" class="t-btn t-btn-block" id="btn-save">[ ENCRYPT & UPLOAD TO SATELLITE ]</button>
             </div>
 
-            <div class="mb-4 d-flex align-items-center gap-2">
-                <span class="text-main">></span>
-                <input type="text" id="live-search" class="form-control cli-search w-100" placeholder="QUERY_VAULT_DATA... (Title, ID, or Note)" onkeyup="renderVault(this.value)">
+            <div class="mb-4 d-flex align-items-center gap-2 p-3 t-card" style="border-style: dashed; background: transparent;">
+                <span class="text-success font-bold">></span>
+                <input type="text" id="live-search" class="t-input cli-search w-100 m-0" placeholder="QUERY_VAULT_DATA... (Search Title, ID, or Note)" onkeyup="renderVault(this.value)">
             </div>
 
             <div id="vault-items">
@@ -139,38 +151,57 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
     </div>
 
-    <div id="editModal" class="modal-overlay">
-        <div class="modal-dialog">
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                <h3 class="mb-0 text-main">> MODIFY_PAYLOAD</h3>
+    <div id="editModal" class="t-modal">
+        <div class="t-modal-content">
+            <div class="t-card-header d-flex justify-content-between align-items-center">
+                <span class="text-success">> MODIFY_PAYLOAD</span>
+                <button class="t-btn danger t-btn-sm" onclick="Terminal.modal.close('editModal')">[ X CLOSE ]</button>
             </div>
             
             <input type="hidden" id="edit-id">
             
-            <div class="d-flex gap-3 mb-3" style="flex-wrap: wrap;">
-                <select id="edit-type" class="form-control" style="width: 150px; padding: 10px;" onchange="toggleEditFormMode()">
-                    <option value="NOTE">NOTE</option>
-                    <option value="PASSWORD">PASSWORD</option>
-                </select>
-                <input type="text" id="edit-title" class="form-control" placeholder="Title" style="flex: 1; padding: 10px 15px; min-width: 200px;">
+            <div class="d-flex gap-3 mb-3 flex-wrap">
+                <div style="width: 150px;">
+                    <label class="t-form-label">> TYPE</label>
+                    <select id="edit-type" class="t-select m-0" onchange="toggleEditFormMode()">
+                        <option value="NOTE">NOTE</option>
+                        <option value="PASSWORD">PASSWORD</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="t-form-label">> TITLE</label>
+                    <input type="text" id="edit-title" class="t-input m-0" placeholder="Title">
+                </div>
             </div>
             
             <div id="edit-password-fields">
-                <div class="d-flex gap-3 mb-3" style="flex-wrap: wrap;">
-                    <input type="text" id="edit-email" class="form-control" placeholder="ID / Email" style="flex: 1; padding: 10px 15px; min-width: 150px;">
-                    <input type="url" id="edit-url" class="form-control" placeholder="URL Target" style="flex: 1; padding: 10px 15px; min-width: 150px;">
-                    <input type="text" id="edit-pass" class="form-control" placeholder="The Password" style="flex: 1; padding: 10px 15px; min-width: 150px;">
+                <div class="d-flex gap-3 mb-3 flex-wrap">
+                    <div style="flex: 1; min-width: 120px;">
+                        <label class="t-form-label">> ID/EMAIL</label>
+                        <input type="text" id="edit-email" class="t-input m-0">
+                    </div>
+                    <div style="flex: 1; min-width: 120px;">
+                        <label class="t-form-label">> URL</label>
+                        <input type="url" id="edit-url" class="t-input m-0">
+                    </div>
+                    <div style="flex: 1; min-width: 120px;">
+                        <label class="t-form-label">> PASS</label>
+                        <input type="text" id="edit-pass" class="t-input m-0">
+                    </div>
                 </div>
             </div>
 
-            <textarea id="edit-content" class="form-control mb-4" rows="4" style="padding: 15px; margin-top: 15px;" placeholder="Notes / Detail payload..."></textarea>
+            <label class="t-form-label mt-3">> PRIVATE_NOTES</label>
+            <textarea id="edit-content" class="t-textarea mb-4" rows="3"></textarea>
             
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-danger" onclick="closeEditModal()">[ ABORT ]</button>
-                <button onclick="saveEditEntry()" id="btn-edit-save" class="btn btn-main">[ OVERRIDE_PAYLOAD ]</button>
+                <button type="button" class="t-btn danger" onclick="Terminal.modal.close('editModal')">[ ABORT ]</button>
+                <button onclick="saveEditEntry()" id="btn-edit-save" class="t-btn t-glow font-bold">[ OVERRIDE_PAYLOAD ]</button>
             </div>
         </div>
     </div>
+
+    <script src="../assets/terminal.js"></script>
 
     <script>
         let ghToken = localStorage.getItem('bunker_gh_token');
@@ -178,14 +209,22 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         let vaultData = [];
         let activePassword = '';
 
+        document.addEventListener("DOMContentLoaded", () => {
+            Terminal.splash.close(1000);
+            updateUI();
+        });
+
+        // Fitur Copy Teks dengan Interaksi Terminal
         function copyText(text, element) {
             navigator.clipboard.writeText(text).then(() => {
+                Terminal.toast('DATA COPIED TO CLIPBOARD', 'normal');
+                
                 const originalText = element.innerText;
                 const isBlur = element.classList.contains('blur-text');
                 
                 if (isBlur) element.classList.remove('blur-text');
-                element.innerText = '[COPIED!]';
-                element.style.color = 'var(--text-main)';
+                element.innerText = '[ COPIED_TO_MEM ]';
+                element.style.color = 'var(--t-green)';
                 element.style.fontWeight = 'bold';
                 
                 setTimeout(() => {
@@ -195,20 +234,18 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     if (isBlur) element.classList.add('blur-text');
                 }, 1500);
             }).catch(err => {
-                alert("> SYS_ERR: Clipboard access denied.");
+                Terminal.toast('SYS_ERR: CLIPBOARD ACCESS DENIED', 'danger');
             });
         }
 
         function toggleFormMode() {
             const type = document.getElementById('entry-type').value;
-            const passFields = document.getElementById('password-fields');
-            passFields.style.display = (type === 'PASSWORD') ? 'block' : 'none';
+            document.getElementById('password-fields').style.display = (type === 'PASSWORD') ? 'block' : 'none';
         }
 
         function toggleEditFormMode() {
             const type = document.getElementById('edit-type').value;
-            const passFields = document.getElementById('edit-password-fields');
-            passFields.style.display = (type === 'PASSWORD') ? 'block' : 'none';
+            document.getElementById('edit-password-fields').style.display = (type === 'PASSWORD') ? 'block' : 'none';
         }
 
         function updateUI() {
@@ -228,15 +265,19 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const t = document.getElementById('setup-token').value.trim();
             const g = document.getElementById('setup-gist').value.trim();
             if(t && g) {
-                localStorage.setItem('bunker_gh_token', t);
-                localStorage.setItem('bunker_gist_id', g);
-                ghToken = t; gistId = g;
-                updateUI();
+                Terminal.splash.show('> LINKING TO SATELLITE...');
+                setTimeout(() => {
+                    localStorage.setItem('bunker_gh_token', t);
+                    localStorage.setItem('bunker_gist_id', g);
+                    ghToken = t; gistId = g;
+                    updateUI();
+                    Terminal.splash.close(500);
+                }, 800);
             }
         }
 
         function purgeSetup() {
-            if(confirm("WARNING: Destroy terminal link coordinates?")) {
+            if(confirm("> WARNING: Destroy terminal link coordinates?")) {
                 localStorage.removeItem('bunker_gh_token');
                 localStorage.removeItem('bunker_gist_id');
                 ghToken = null; gistId = null;
@@ -248,7 +289,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const pwd = document.getElementById('master-password').value;
             if(!pwd) return;
             
-            document.getElementById('btn-unlock').innerText = "[ FETCHING SATELLITE... ]";
+            Terminal.splash.show('> DECRYPTING PAYLOAD FROM SATELLITE...');
             
             try {
                 const res = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -264,7 +305,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 if (content.trim() === 'INIT') {
                     vaultData = [];
                     activePassword = pwd;
+                    document.getElementById('master-password').value = ''; 
                     updateUI();
+                    Terminal.toast('VAULT INITIALIZED', 'success');
                 } else {
                     try {
                         const bytes = CryptoJS.AES.decrypt(content, pwd);
@@ -275,14 +318,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         activePassword = pwd;
                         document.getElementById('master-password').value = ''; 
                         updateUI();
+                        Terminal.toast('ACCESS GRANTED', 'normal');
                     } catch(e) {
-                        alert("> SYS_ERR: INVALID MASTER PASSWORD OR CORRUPT DATA.");
+                        Terminal.toast('INVALID MASTER PASSWORD', 'danger');
                     }
                 }
             } catch(e) {
-                alert("> SYS_ERR: " + e.message);
+                Terminal.toast(e.message, 'danger');
             }
-            document.getElementById('btn-unlock').innerText = "[ DECRYPT_PAYLOAD ]";
+            Terminal.splash.close(500);
         }
 
         function lockVault() {
@@ -290,11 +334,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             activePassword = '';
             document.getElementById('live-search').value = ''; 
             updateUI();
+            Terminal.toast('VAULT SECURED', 'warning');
         }
 
-        async function saveToGitHub(btnId = 'btn-save', btnText = '[ ENCRYPT & UPLOAD ]') {
-            const btn = document.getElementById(btnId);
-            if(btn) btn.innerText = "[ ENCRYPTING... ]";
+        async function saveToGitHub() {
+            Terminal.splash.show('> ENCRYPTING & UPLOADING TO SATELLITE...');
             
             try {
                 const payloadStr = JSON.stringify(vaultData);
@@ -311,11 +355,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     })
                 });
                 if(!res.ok) throw new Error("Failed to upload payload.");
+                Terminal.toast('UPLOAD SUCCESSFUL', 'normal');
             } catch(e) {
-                alert("> SYS_ERR: " + e.message);
+                Terminal.toast(e.message, 'danger');
             }
             
-            if(btn) btn.innerText = btnText;
+            Terminal.splash.close(500);
         }
 
         function toggleAddForm() {
@@ -328,7 +373,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const title = document.getElementById('entry-title').value.trim();
             const content = document.getElementById('entry-content').value.trim();
             
-            if(!title) { alert("> SYS_ERR: TITLE IS REQUIRED."); return; }
+            if(!title) { Terminal.toast('TITLE IS REQUIRED', 'danger'); return; }
 
             const newEntry = {
                 id: Date.now(),
@@ -345,7 +390,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
             
             vaultData.unshift(newEntry);
-            await saveToGitHub('btn-save', '[ ENCRYPT & UPLOAD ]');
+            await saveToGitHub();
             
             document.getElementById('entry-title').value = '';
             document.getElementById('entry-content').value = '';
@@ -355,8 +400,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             toggleAddForm();
             renderVault();
         }
-
-        const modal = document.getElementById('editModal');
 
         function openEditModal(id) {
             const item = vaultData.find(i => i.id === id);
@@ -378,16 +421,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
 
             toggleEditFormMode();
-            modal.classList.add('active');
+            Terminal.modal.open('editModal');
         }
-
-        function closeEditModal() {
-            modal.classList.remove('active');
-        }
-
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeEditModal();
-        });
 
         async function saveEditEntry() {
             const id = parseInt(document.getElementById('edit-id').value);
@@ -398,7 +433,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const type = document.getElementById('edit-type').value;
             const title = document.getElementById('edit-title').value.trim();
             
-            if(!title) { alert("> SYS_ERR: TITLE IS REQUIRED."); return; }
+            if(!title) { Terminal.toast('TITLE IS REQUIRED', 'danger'); return; }
 
             vaultData[index].type = type;
             vaultData[index].title = title;
@@ -414,29 +449,16 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 delete vaultData[index].password;
             }
 
-            await saveToGitHub('btn-edit-save', '[ OVERRIDE_PAYLOAD ]');
-            closeEditModal();
+            await saveToGitHub();
+            Terminal.modal.close('editModal');
             renderVault(document.getElementById('live-search').value);
         }
 
         async function deleteEntry(id) {
-            if(confirm("WARNING: Irrevocably destroy this payload?")) {
+            if(confirm("> WARNING: Irrevocably destroy this payload?")) {
                 vaultData = vaultData.filter(i => i.id !== id);
                 await saveToGitHub();
                 renderVault(document.getElementById('live-search').value);
-            }
-        }
-
-        function toggleItem(id) {
-            const contentDiv = document.getElementById('content-' + id);
-            const isCurrentlyOpen = contentDiv.style.display === 'block';
-
-            document.querySelectorAll('.item-content').forEach(el => {
-                el.style.display = 'none';
-            });
-
-            if (!isCurrentlyOpen) {
-                contentDiv.style.display = 'block';
             }
         }
 
@@ -458,50 +480,50 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
 
             if(displayData.length === 0) {
-                container.innerHTML = `<div class="text-center text-muted p-5 border border-secondary">> ${query === '' ? 'VAULT EMPTY. NO DATA CHUNKS FOUND.' : 'NO MATCHING DATA FOUND.'}</div>`;
+                container.innerHTML = `<div class="text-center text-muted p-5 t-border border-dashed">> ${query === '' ? 'VAULT EMPTY. NO DATA CHUNKS FOUND.' : 'NO MATCHING DATA FOUND.'}</div>`;
                 return;
             }
 
             displayData.forEach(item => {
                 const isPass = item.type === 'PASSWORD';
-                const badgeClass = isPass ? 'badge-pass' : 'badge-note';
+                const badgeClass = isPass ? 'danger' : 'warning';
                 
                 let detailHtml = '';
                 
                 if (isPass) {
-                    const emailHtml = item.email ? `<div class="mb-2"><span class="text-muted">> ID/EMAIL:</span> <span class="text-light copy-target" onclick="copyText('${item.email}', this)" title="Click to copy">${item.email}</span></div>` : '';
-                    const urlHtml = item.url ? `<div class="mb-2"><span class="text-muted">> URL_TARGET:</span> <a href="${item.url}" target="_blank" class="text-main" style="text-decoration:none;">${item.url}</a></div>` : '';
-                    const passHtml = item.password ? `<div><span class="text-muted">> PASS_KEY:</span> <span class="blur-text text-light" onclick="copyText('${item.password}', this)" title="Click to copy">${item.password}</span></div>` : '';
-                    const borderHtml = (item.email || item.url || item.password) ? `<div class="border-bottom border-secondary pb-3 mb-3"></div>` : '';
+                    const emailHtml = item.email ? `<div class="mb-2"><span class="text-muted">> ID/EMAIL:</span> <span class="text-success copy-target" onclick="copyText('${item.email}', this)" title="Click to copy">${item.email}</span></div>` : '';
+                    const urlHtml = item.url ? `<div class="mb-2"><span class="text-muted">> URL_TARGET:</span> <a href="${item.url}" target="_blank" class="text-success" style="text-decoration:underline dashed;">${item.url}</a></div>` : '';
+                    const passHtml = item.password ? `<div><span class="text-muted">> PASS_KEY:</span> <span class="blur-text text-success" onclick="copyText('${item.password}', this)" title="Click to copy">${item.password}</span></div>` : '';
+                    const borderHtml = (item.email || item.url || item.password) ? `<div class="t-border-bottom pb-3 mb-3"></div>` : '';
                     
                     detailHtml = emailHtml + urlHtml + passHtml + borderHtml;
                 }
 
-                const notesHtml = item.content ? `<div class="text-light">${item.content.replace(/\n/g, '<br>')}</div>` : '';
+                const notesHtml = item.content ? `<div class="text-success">${item.content.replace(/\n/g, '<br>')}</div>` : '';
 
+                // Menggunakan struktur Native t-accordion
+                // Modifikasi: Gaya flex-start agar konten rapat ke kiri [Judul] [Badge] ... [Tanggal] di kanan
                 const div = document.createElement('div');
-                div.className = `item-card ${isPass ? 'type-password' : ''}`;
+                div.className = `t-accordion mb-3`;
                 div.innerHTML = `
-                    <div class="item-title" onclick="toggleItem(${item.id})">
-                        <span><span class="badge ${badgeClass} me-2">${item.type}</span> ${item.title}</span>
-                        <span class="text-muted fs-small">${item.date} [+]</span>
-                    </div>
-                    <div class="item-content" id="content-${item.id}">
+                    <button class="t-accordion-btn" onclick="Terminal.accordion(this)" style="justify-content: flex-start; gap: 12px;">
+                        <span class="d-flex align-items-center gap-2">${item.title} <span class="t-badge ${badgeClass}">${item.type}</span></span>
+                        <span class="text-muted fs-small d-none d-md-inline" style="margin-left: auto;">${item.date}</span>
+                    </button>
+                    <div class="t-accordion-content">
                         <div class="mb-4" style="font-size: 0.95rem;">
                             ${detailHtml}
                             ${notesHtml}
                         </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button onclick="openEditModal(${item.id})" class="btn btn-main btn-sm">[ EDIT ]</button>
-                            <button onclick="deleteEntry(${item.id})" class="btn btn-danger btn-sm">[ PURGE ]</button>
+                        <div class="d-flex justify-content-end gap-2 t-border-top pt-3">
+                            <button onclick="openEditModal(${item.id})" class="t-btn t-btn-sm">[ EDIT ]</button>
+                            <button onclick="deleteEntry(${item.id})" class="t-btn danger t-btn-sm">[ PURGE ]</button>
                         </div>
                     </div>
                 `;
                 container.appendChild(div);
             });
         }
-
-        updateUI();
     </script>
 </body>
 </html>
