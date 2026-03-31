@@ -282,9 +282,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> COMMS: ECHO_BROADCAST</h2>
                 <div class="text-muted fs-small mt-1">> STATUS: TRANSMITTING SIGNALS INTO THE VOID...</div>
             </div>
+            
+            <?php if ($is_admin): ?>
             <div>
                 <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Dashboard">[ ➜ ] RETURN_OS</a>
             </div>
+            <?php endif; ?>
+            
         </div>
 
         <?php if (count($active_stories) > 0): ?>
