@@ -160,6 +160,14 @@ try {
                 <a href="../vault/index.php" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
+            <div class="t-card mb-0 d-flex flex-column justify-content-between">
+                <div>
+                    <h3 class="mb-1 text-success">> TOKEN: AUTH</h3>
+                    <p class="text-muted fs-small mb-4" style="opacity: 0.8;">Zero-knowledge 2FA generator. Requires master key.</p>
+                </div>
+                <a href="../auth/index.php" class="t-btn t-btn-block">INITIALIZE</a>
+            </div>
+
             <div class="t-card danger mb-0 d-flex flex-column justify-content-between">
                 <div>
                     <h3 class="mb-1 text-danger">> PROTOCOL: EVAC</h3>
@@ -187,7 +195,8 @@ try {
                         <span class="text-success">></span> BLOG: <?= formatBytes($blog_db_size) ?><br>
                         <span class="text-success">></span> INDEX: <?= formatBytes($index_db_size) ?><br>
                         <span class="text-success">></span> GRID: <?= formatBytes($grid_db_size) ?><br>
-                        <span class="text-success">> VAULT: [ CLOUD_SATELLITE ]</span>
+                        <span class="text-success">> VAULT: [ CLOUD_SATELLITE ]</span><br>
+                        <span class="text-success">> AUTH: [ CLOUD_SATELLITE ]</span>
                     </div>
                 </div>
 
