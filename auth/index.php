@@ -199,6 +199,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         
         let satelliteState = 'LOCKED';
         let activeSatellite = 'UNKNOWN';
+        let clipboardTimer = null; // Timer untuk auto-clear
 
         document.addEventListener("DOMContentLoaded", () => {
             Terminal.splash.close(1000);
@@ -216,6 +217,31 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 syncPendingData();
             });
         });
+
+        // ================= KRIPTOGRAFI MILITER (PBKDF2) =================
+        function encryptPayload(dataStr, pwd) {
+            const salt = CryptoJS.lib.WordArray.random(128/8);
+            const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000 });
+            const iv = CryptoJS.lib.WordArray.random(128/8);
+            const encrypted = CryptoJS.AES.encrypt(dataStr, key, { iv: iv });
+            return 'v2|' + salt.toString() + '|' + iv.toString() + '|' + encrypted.ciphertext.toString();
+        }
+
+        function decryptPayload(cipherText, pwd) {
+            if (cipherText.startsWith('v2|')) {
+                const parts = cipherText.split('|');
+                const salt = CryptoJS.enc.Hex.parse(parts[1]);
+                const iv = CryptoJS.enc.Hex.parse(parts[2]);
+                const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext: CryptoJS.enc.Hex.parse(parts[3]) });
+                const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000 });
+                const decrypted = CryptoJS.AES.decrypt(cipherParams, key, { iv: iv });
+                return decrypted.toString(CryptoJS.enc.Utf8);
+            } else {
+                // Backward Compatibility (AES Lama)
+                const bytes = CryptoJS.AES.decrypt(cipherText, pwd);
+                return bytes.toString(CryptoJS.enc.Utf8);
+            }
+        }
 
         // ================= DIAGNOSTIK UI =================
         function updateSatelliteBadge() {
@@ -249,7 +275,18 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 Terminal.toast('TOTP COPIED TO CLIPBOARD', 'normal');
                 const originalText = element.innerText;
                 element.innerText = 'COPIED';
+                
+                // Kembalikan ke teks TOTP semula setelah 1 detik
                 setTimeout(() => { element.innerText = originalText; }, 1000);
+
+                // GLOBAL CLIPBOARD AUTO-CLEAR (30 Detik)
+                if(clipboardTimer) clearTimeout(clipboardTimer);
+                clipboardTimer = setTimeout(() => {
+                    navigator.clipboard.writeText(' ').then(() => {
+                        Terminal.toast('> CLIPBOARD SECURED (AUTO-CLEARED)', 'warning');
+                    }).catch(e => console.log(e));
+                }, 30000);
+
             }).catch(err => {
                 Terminal.toast('SYS_ERR: CLIPBOARD DENIED', 'danger');
             });
@@ -462,8 +499,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             document.getElementById('init-confirm').value = '';
             
             Terminal.toast('CORE FORMATTED. SYNCING CLOUDS...', 'warning');
-            const encrypted = CryptoJS.AES.encrypt("[]", activePassword).toString();
-            await syncToSatellites(encrypted);
+            await syncToSatellites(encryptPayload("[]", activePassword));
             updateUI();
         }
 
@@ -496,16 +532,28 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
 
             try {
-                const bytes = CryptoJS.AES.decrypt(content, pwd);
-                const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-                if(!decrypted) throw new Error("DECRYPTION FAILED");
+                const decryptedStr = decryptPayload(content, pwd);
+                if(!decryptedStr) throw new Error("DECRYPTION FAILED");
                 
-                authData = JSON.parse(decrypted);
+                authData = JSON.parse(decryptedStr);
+
+                // CEK MIGRASI (AES Lama ke PBKDF2 Baru)
+                let isMigrated = false;
+                if (!content.startsWith('v2|')) {
+                    isMigrated = true;
+                    Terminal.toast('> LEGACY DATA DETECTED. AUTO-UPGRADING TO PBKDF2...', 'warning');
+                }
+
                 activePassword = pwd;
                 satelliteState = 'UNLOCKED';
                 document.getElementById('master-password').value = ''; 
                 updateUI();
                 Terminal.toast('ACCESS GRANTED', 'normal');
+
+                if(isMigrated) {
+                    syncToSatellites(encryptPayload(JSON.stringify(authData), activePassword));
+                }
+
             } catch(e) {
                 Terminal.toast('INVALID MASTER PASSWORD', 'danger');
             }
@@ -539,7 +587,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const newEntry = { id: Date.now(), issuer: issuer, account: account, secret: secret };
             authData.push(newEntry);
             
-            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(authData), activePassword).toString());
+            await syncToSatellites(encryptPayload(JSON.stringify(authData), activePassword));
             
             document.getElementById('entry-issuer').value = '';
             document.getElementById('entry-account').value = '';
@@ -575,7 +623,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             authData[index].account = account;
             authData[index].secret = secret;
 
-            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(authData), activePassword).toString());
+            await syncToSatellites(encryptPayload(JSON.stringify(authData), activePassword));
             Terminal.modal.close('editModal');
             renderAuthCards();
         }
@@ -583,7 +631,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function deleteEntry(id) {
             if(confirm("> WARNING: Irrevocably destroy this 2FA Key?")) {
                 authData = authData.filter(i => i.id !== id);
-                await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(authData), activePassword).toString());
+                await syncToSatellites(encryptPayload(JSON.stringify(authData), activePassword));
                 renderAuthCards();
             }
         }
@@ -619,7 +667,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         </div>
                     </div>
                     <div class="text-center" onclick="copyTotp(document.getElementById('totp-${item.id}').innerText, this)">
-                        <div id="totp-${item.id}" class="text-success t-totp-code">------</div>
+                        <div id="totp-${item.id}" class="text-success t-totp-code" style="cursor:pointer;" title="Click to Copy">------</div>
                     </div>
                     <div class="t-timer-line-bg">
                         <div id="bar-${item.id}" class="t-timer-line"></div>

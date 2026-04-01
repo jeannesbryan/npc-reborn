@@ -153,9 +153,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                             <label class="t-form-label">> ID / EMAIL</label>
                             <input type="text" id="entry-login-email" class="t-input m-0" placeholder="Identify...">
                         </div>
-                        <div style="flex: 1; min-width: 150px;">
-                            <label class="t-form-label">> PASSWORD</label>
-                            <input type="text" id="entry-login-pass" class="t-input m-0" placeholder="The Password">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label class="t-form-label">> PASSWORD <span id="strength-entry-pass" class="fs-small ml-2"></span></label>
+                            <div class="t-input-group m-0">
+                                <input type="text" id="entry-login-pass" class="t-input m-0" placeholder="The Password" oninput="checkStrength(this.value, 'strength-entry-pass')">
+                                <button type="button" class="t-input-action-btn text-warning" onclick="generateAndFill('entry-login-pass', 'strength-entry-pass')" title="Generate Secure Password">[ GEN ]</button>
+                            </div>
                         </div>
                         <div style="flex: 1; min-width: 150px;">
                             <label class="t-form-label">> URL_TARGET</label>
@@ -193,9 +196,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
                 <div id="add-fields-WIFI" class="dynamic-fields">
                     <div class="d-flex gap-3 mb-3 flex-wrap">
-                        <div style="flex: 1; min-width: 150px;">
-                            <label class="t-form-label">> WIFI_PASSWORD</label>
-                            <input type="text" id="entry-wifi-pass" class="t-input m-0" placeholder="Password for this SSID">
+                        <div style="flex: 1; min-width: 250px;">
+                            <label class="t-form-label">> WIFI_PASSWORD <span id="strength-entry-wifi" class="fs-small ml-2"></span></label>
+                            <div class="t-input-group m-0">
+                                <input type="text" id="entry-wifi-pass" class="t-input m-0" placeholder="Password for this SSID" oninput="checkStrength(this.value, 'strength-entry-wifi')">
+                                <button type="button" class="t-input-action-btn text-warning" onclick="generateAndFill('entry-wifi-pass', 'strength-entry-wifi')">[ GEN ]</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -263,9 +269,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         <label class="t-form-label">> ID/EMAIL</label>
                         <input type="text" id="edit-login-email" class="t-input m-0">
                     </div>
-                    <div style="flex: 1; min-width: 120px;">
-                        <label class="t-form-label">> PASS</label>
-                        <input type="text" id="edit-login-pass" class="t-input m-0">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label class="t-form-label">> PASS <span id="strength-edit-pass" class="fs-small ml-2"></span></label>
+                        <div class="t-input-group m-0">
+                            <input type="text" id="edit-login-pass" class="t-input m-0" oninput="checkStrength(this.value, 'strength-edit-pass')">
+                            <button type="button" class="t-input-action-btn text-warning" onclick="generateAndFill('edit-login-pass', 'strength-edit-pass')">[ GEN ]</button>
+                        </div>
                     </div>
                     <div style="flex: 1; min-width: 120px;">
                         <label class="t-form-label">> URL</label>
@@ -303,9 +312,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
             <div id="edit-fields-WIFI" class="dynamic-fields">
                 <div class="d-flex gap-3 mb-3 flex-wrap">
-                    <div style="flex: 1; min-width: 150px;">
-                        <label class="t-form-label">> WIFI_PASSWORD</label>
-                        <input type="text" id="edit-wifi-pass" class="t-input m-0">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label class="t-form-label">> WIFI_PASSWORD <span id="strength-edit-wifi" class="fs-small ml-2"></span></label>
+                        <div class="t-input-group m-0">
+                            <input type="text" id="edit-wifi-pass" class="t-input m-0" oninput="checkStrength(this.value, 'strength-edit-wifi')">
+                            <button type="button" class="t-input-action-btn text-warning" onclick="generateAndFill('edit-wifi-pass', 'strength-edit-wifi')">[ GEN ]</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -323,17 +335,18 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <script src="../assets/terminal.js"></script>
 
     <script>
-        // MULTI-CLOUD CREDENTIALS
-        let ghToken = localStorage.getItem('bunker_gh_token');
-        let gistId = localStorage.getItem('bunker_gist_id');
-        let glToken = localStorage.getItem('bunker_gl_token');
-        let snippetId = localStorage.getItem('bunker_gl_id');
+        // MULTI-CLOUD CREDENTIALS (ISOLATED NAMESPACE FOR VAULT)
+        let ghToken = localStorage.getItem('vault_gh_token');
+        let gistId = localStorage.getItem('vault_gist_id');
+        let glToken = localStorage.getItem('vault_gl_token');
+        let snippetId = localStorage.getItem('vault_gl_id');
 
         let vaultData = [];
         let activePassword = '';
         let satelliteState = 'LOCKED';
         let currentFilter = 'ALL';
-        let activeSatellite = 'UNKNOWN'; // Menyimpan info darimana data diambil
+        let activeSatellite = 'UNKNOWN'; 
+        let clipboardTimer = null; 
 
         document.addEventListener("DOMContentLoaded", () => {
             Terminal.splash.close(1000);
@@ -349,6 +362,63 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             
             toggleFormMode('add');
         });
+
+        // ================= KRIPTOGRAFI MILITER (PBKDF2) =================
+        function encryptPayload(dataStr, pwd) {
+            const salt = CryptoJS.lib.WordArray.random(128/8);
+            const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000 });
+            const iv = CryptoJS.lib.WordArray.random(128/8);
+            const encrypted = CryptoJS.AES.encrypt(dataStr, key, { iv: iv });
+            return 'v2|' + salt.toString() + '|' + iv.toString() + '|' + encrypted.ciphertext.toString();
+        }
+
+        function decryptPayload(cipherText, pwd) {
+            if (cipherText.startsWith('v2|')) {
+                const parts = cipherText.split('|');
+                const salt = CryptoJS.enc.Hex.parse(parts[1]);
+                const iv = CryptoJS.enc.Hex.parse(parts[2]);
+                const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext: CryptoJS.enc.Hex.parse(parts[3]) });
+                const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000 });
+                const decrypted = CryptoJS.AES.decrypt(cipherParams, key, { iv: iv });
+                return decrypted.toString(CryptoJS.enc.Utf8);
+            } else {
+                const bytes = CryptoJS.AES.decrypt(cipherText, pwd);
+                return bytes.toString(CryptoJS.enc.Utf8);
+            }
+        }
+
+        // ================= BUNKER PASSGEN =================
+        function checkStrength(pwd, elId) {
+            const el = document.getElementById(elId);
+            if(!el) return;
+            if(!pwd) { el.innerHTML = ''; return; }
+            
+            let score = 0;
+            if(pwd.length >= 8) score++;
+            if(pwd.length >= 12) score++;
+            if(/[A-Z]/.test(pwd)) score++;
+            if(/[a-z]/.test(pwd)) score++;
+            if(/[0-9]/.test(pwd)) score++;
+            if(/[^A-Za-z0-9]/.test(pwd)) score++;
+
+            if(score <= 2) el.innerHTML = '<span class="text-danger">[ WEAK ]</span>';
+            else if(score <= 4) el.innerHTML = '<span class="text-warning">[ FAIR ]</span>';
+            else el.innerHTML = '<span class="text-success">[ STRONG ]</span>';
+        }
+
+        function generateAndFill(inputId, strengthId) {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+            let pwd = "";
+            const array = new Uint32Array(16);
+            window.crypto.getRandomValues(array);
+            for (let i = 0; i < 16; i++) {
+                pwd += chars[array[i] % chars.length];
+            }
+            const input = document.getElementById(inputId);
+            input.value = pwd;
+            if(input.type === 'password') input.type = 'text'; 
+            checkStrength(pwd, strengthId);
+        }
 
         // ================= DIAGNOSTIK UI =================
         function updateSatelliteBadge() {
@@ -370,7 +440,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
             const syncBadge = document.getElementById('badge-sync');
             if(syncBadge) {
-                // Tampilkan text "PENDING UPLOAD" jika masih ada hutang sinkronisasi
                 syncBadge.style.display = (localStorage.getItem('bunker_vault_pending_sync') === 'true') ? 'block' : 'none';
             }
         }
@@ -393,7 +462,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const allActive = document.querySelectorAll('#vault-items .t-accordion-btn.active');
             allActive.forEach(activeBtn => {
                 if (activeBtn !== btn) {
-                    Terminal.accordion(activeBtn); // Tutup yang lain
+                    Terminal.accordion(activeBtn); 
                 }
             });
             Terminal.accordion(btn);
@@ -430,6 +499,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     element.style.fontWeight = 'normal';
                     if (isBlur) element.classList.add('blur-text');
                 }, 1500);
+
+                if(clipboardTimer) clearTimeout(clipboardTimer);
+                clipboardTimer = setTimeout(() => {
+                    navigator.clipboard.writeText(' ').then(() => {
+                        Terminal.toast('> CLIPBOARD SECURED (AUTO-CLEARED)', 'warning');
+                    }).catch(e => console.log(e));
+                }, 30000);
+
             }).catch(err => {
                 Terminal.toast('SYS_ERR: CLIPBOARD ACCESS DENIED', 'danger');
             });
@@ -461,23 +538,24 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         // ================= SATELLITE COMMS (DUAL READ) =================
         async function fetchFromSatellites() {
             let content = null;
-
-            // 1. Coba GitHub (Satelit Utama)
             try {
                 const resGH = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
                     headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}` }
                 });
                 const dataGH = await resGH.json();
-                if (dataGH.message) throw new Error("GH_REJECTED");
+                if (dataGH.message) throw new Error("GH_REJECTED: " + dataGH.message);
                 
                 if (dataGH.files && dataGH.files["bunker_vault.enc"]) {
                     content = dataGH.files["bunker_vault.enc"].content;
                     Terminal.toast('> CONNECTED TO GITHUB', 'normal');
                     return { content: content, source: 'GITHUB' };
+                } else {
+                    throw new Error("GH_MISSING_FILE");
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.warn("> GH Fetch Failed:", e.message);
+            }
 
-            // 2. Coba GitLab (Satelit Cadangan)
             if (glToken && snippetId) {
                 try {
                     const resGL = await fetch(`https://gitlab.com/api/v4/snippets/${snippetId}`, { 
@@ -491,16 +569,19 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                             content = await rawRes.text();
                             Terminal.toast('> GITHUB DOWN. ROUTED TO GITLAB.', 'warning');
                             return { content: content, source: 'GITLAB' };
+                        } else {
+                            throw new Error("GL_MISSING_FILE");
                         }
                     }
-                } catch(e) {}
+                } catch(e) {
+                    console.warn("> GL Fetch Failed:", e.message);
+                }
             }
             throw new Error("ALL_SATELLITES_UNREACHABLE");
         }
 
         async function checkSatelliteStatus() {
             if (!ghToken || !gistId) { updateUI(); return; }
-            
             try {
                 let result = await fetchFromSatellites();
                 activeSatellite = result.source;
@@ -524,7 +605,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function syncPendingData() {
             if (localStorage.getItem('bunker_vault_pending_sync') === 'true') {
                 const cachedPayload = localStorage.getItem('bunker_vault_cache');
-                // Jika sedang pending, paksa sync pakai data cache lokal
                 if (cachedPayload && ghToken) {
                     Terminal.toast('> DETECTED OFFLINE CHANGES. SYNCING TO SATELLITES...', 'warning');
                     await syncToSatellites(cachedPayload);
@@ -538,7 +618,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             localStorage.setItem('bunker_vault_cache', encryptedPayload);
             const promises = [];
 
-            // Target 1: GitHub Gist (Pasti bunker_vault.enc)
             if (ghToken && gistId) {
                 promises.push(fetch(`https://api.github.com/gists/${gistId}`, {
                     method: 'PATCH',
@@ -547,7 +626,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 }).then(res => { if(!res.ok) throw new Error(); return 'GH'; }));
             }
 
-            // Target 2: GitLab Snippet (Pasti bunker_vault.enc)
             if (glToken && snippetId) {
                 promises.push(fetch(`https://gitlab.com/api/v4/snippets/${snippetId}`, {
                     method: 'PUT',
@@ -559,18 +637,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             if(promises.length === 0) return;
 
             try {
-                // Tembak secara paralel!
                 const results = await Promise.allSettled(promises);
                 const success = results.filter(r => r.status === 'fulfilled').length;
 
-                if (success === 0) {
-                    throw new Error("ALL_FAILED");
-                } else if (success < promises.length) {
-                    // Split-Brain Mitigation: Ingat hutang upload jika ada yang gagal
+                if (success === 0) throw new Error("ALL_FAILED");
+                else if (success < promises.length) {
                     Terminal.toast('PARTIAL SYNC. ONE SATELLITE DOWN.', 'warning');
                     localStorage.setItem('bunker_vault_pending_sync', 'true');
                 } else {
-                    // Semua sukses, hapus hutang upload
                     Terminal.toast('DUAL-SATELLITE SYNC SUCCESSFUL', 'normal');
                     localStorage.removeItem('bunker_vault_pending_sync');
                 }
@@ -578,7 +652,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 localStorage.setItem('bunker_vault_pending_sync', 'true');
                 Terminal.toast('SAVED LOCALLY. PENDING SYNC (OFFLINE)', 'warning');
             }
-            updateSatelliteBadge(); // Refresh status badge UI
+            updateSatelliteBadge(); 
             Terminal.splash.close(500);
         }
 
@@ -591,17 +665,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             if(tGH && iGH) {
                 Terminal.splash.show('> LINKING TO SATELLITES...');
                 setTimeout(() => {
-                    localStorage.setItem('bunker_gh_token', tGH);
-                    localStorage.setItem('bunker_gist_id', iGH);
-                    
+                    localStorage.setItem('vault_gh_token', tGH);
+                    localStorage.setItem('vault_gist_id', iGH);
                     if(tGL && iGL) { 
-                        localStorage.setItem('bunker_gl_token', tGL); 
-                        localStorage.setItem('bunker_gl_id', iGL); 
+                        localStorage.setItem('vault_gl_token', tGL); 
+                        localStorage.setItem('vault_gl_id', iGL); 
                     }
-                    
-                    ghToken = tGH; gistId = iGH;
-                    glToken = tGL; snippetId = iGL;
-                    
+                    ghToken = tGH; gistId = iGH; glToken = tGL; snippetId = iGL;
                     checkSatelliteStatus();
                     Terminal.splash.close(500);
                 }, 800);
@@ -612,8 +682,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
         function purgeSetup() {
             if(confirm("> WARNING: Destroy all terminal link coordinates?")) {
-                localStorage.removeItem('bunker_gh_token'); localStorage.removeItem('bunker_gist_id');
-                localStorage.removeItem('bunker_gl_token'); localStorage.removeItem('bunker_gl_id');
+                localStorage.removeItem('vault_gh_token'); 
+                localStorage.removeItem('vault_gist_id');
+                localStorage.removeItem('vault_gl_token'); 
+                localStorage.removeItem('vault_gl_id');
                 ghToken = null; gistId = null; glToken = null; snippetId = null;
                 satelliteState = 'LOCKED';
                 updateUI();
@@ -623,20 +695,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function initializeVault() {
             const pwd1 = document.getElementById('init-password').value;
             const pwd2 = document.getElementById('init-confirm').value;
-            
             if(!pwd1 || !pwd2) return;
             if(pwd1 !== pwd2) { Terminal.toast('PASSWORDS DO NOT MATCH', 'danger'); return; }
 
-            vaultData = [];
-            activePassword = pwd1;
-            satelliteState = 'UNLOCKED';
-            
-            document.getElementById('init-password').value = '';
-            document.getElementById('init-confirm').value = '';
+            vaultData = []; activePassword = pwd1; satelliteState = 'UNLOCKED';
+            document.getElementById('init-password').value = ''; document.getElementById('init-confirm').value = '';
             
             Terminal.toast('VAULT FORMATTED. SYNCING CLOUDS...', 'warning');
-            const encrypted = CryptoJS.AES.encrypt("[]", activePassword).toString();
-            await syncToSatellites(encrypted);
+            await syncToSatellites(encryptPayload("[]", activePassword));
             updateUI();
         }
 
@@ -669,19 +735,19 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
 
             try {
-                const bytes = CryptoJS.AES.decrypt(content, pwd);
-                const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-                if(!decrypted) throw new Error("DECRYPTION FAILED");
+                const decryptedStr = decryptPayload(content, pwd);
+                if(!decryptedStr) throw new Error("DECRYPTION FAILED");
                 
-                vaultData = JSON.parse(decrypted);
+                vaultData = JSON.parse(decryptedStr);
                 
-                // AUTO MIGRATION (Lama ke Baru)
                 let isMigrated = false;
+                if (!content.startsWith('v2|')) {
+                    isMigrated = true;
+                    Terminal.toast('> LEGACY DATA DETECTED. AUTO-UPGRADING TO PBKDF2...', 'warning');
+                }
+
                 vaultData = vaultData.map(item => {
-                    if (item.type === 'PASSWORD') {
-                        item.type = 'LOGIN';
-                        isMigrated = true;
-                    }
+                    if (item.type === 'PASSWORD') { item.type = 'LOGIN'; isMigrated = true; }
                     return item;
                 });
                 
@@ -692,7 +758,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 Terminal.toast('ACCESS GRANTED', 'normal');
                 
                 if(isMigrated) {
-                    syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
+                    syncToSatellites(encryptPayload(JSON.stringify(vaultData), activePassword));
                 }
             } catch(e) {
                 Terminal.toast('INVALID MASTER PASSWORD', 'danger');
@@ -701,11 +767,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         }
 
         function lockVault() {
-            vaultData = [];
-            activePassword = '';
-            satelliteState = 'LOCKED';
-            document.getElementById('live-search').value = ''; 
-            currentFilter = 'ALL';
+            vaultData = []; activePassword = ''; satelliteState = 'LOCKED';
+            document.getElementById('live-search').value = ''; currentFilter = 'ALL';
             checkSatelliteStatus();
             Terminal.toast('VAULT SECURED', 'warning');
         }
@@ -716,13 +779,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const type = document.getElementById('entry-type').value;
             const title = document.getElementById('entry-title').value.trim();
             const content = document.getElementById('entry-content').value.trim();
-            
             if(!title) { Terminal.toast('TITLE/IDENTIFIER IS REQUIRED', 'danger'); return; }
 
-            const newEntry = {
-                id: Date.now(), type: type, title: title, content: content,
-                date: new Date().toISOString().split('T')[0]
-            };
+            const newEntry = { id: Date.now(), type: type, title: title, content: content, date: new Date().toISOString().split('T')[0] };
 
             if (type === 'LOGIN') {
                 newEntry.email = document.getElementById('entry-login-email').value.trim();
@@ -739,9 +798,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
             
             vaultData.unshift(newEntry);
-            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
+            await syncToSatellites(encryptPayload(JSON.stringify(vaultData), activePassword));
             
-            document.querySelectorAll('#add-form input, #add-form textarea').forEach(el => el.value = '');
+            document.querySelectorAll('#add-form input, #add-form textarea').forEach(el => {
+                if(el.type !== 'button') el.value = '';
+            });
+            document.querySelectorAll('[id^="strength-"]').forEach(el => el.innerHTML = ''); 
             toggleAddForm();
             renderVault();
         }
@@ -750,7 +812,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const item = vaultData.find(i => i.id === id);
             if(!item) return;
 
-            document.querySelectorAll('#editModal input:not([type="hidden"]), #editModal textarea').forEach(el => el.value = '');
+            document.querySelectorAll('#editModal input:not([type="hidden"]), #editModal textarea').forEach(el => {
+                if(el.type !== 'button') el.value = '';
+            });
+            document.querySelectorAll('[id^="strength-"]').forEach(el => el.innerHTML = '');
 
             document.getElementById('edit-id').value = item.id;
             document.getElementById('edit-type').value = item.type;
@@ -761,6 +826,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 document.getElementById('edit-login-email').value = item.email || '';
                 document.getElementById('edit-login-pass').value = item.password || '';
                 document.getElementById('edit-login-url').value = item.url || '';
+                checkStrength(item.password, 'strength-edit-pass');
             } else if (item.type === 'CARD') {
                 document.getElementById('edit-card-name').value = item.cardName || '';
                 document.getElementById('edit-card-number').value = item.cardNumber || '';
@@ -769,6 +835,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 document.getElementById('edit-card-pin').value = item.cardPin || '';
             } else if (item.type === 'WIFI') {
                 document.getElementById('edit-wifi-pass').value = item.wifiPass || '';
+                checkStrength(item.wifiPass, 'strength-edit-wifi');
             }
 
             toggleFormMode('edit');
@@ -782,7 +849,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
             const type = document.getElementById('edit-type').value;
             const title = document.getElementById('edit-title').value.trim();
-            
             if(!title) { Terminal.toast('TITLE IS REQUIRED', 'danger'); return; }
 
             delete vaultData[index].email; delete vaultData[index].password; delete vaultData[index].url;
@@ -807,7 +873,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 vaultData[index].wifiPass = document.getElementById('edit-wifi-pass').value.trim();
             }
 
-            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
+            await syncToSatellites(encryptPayload(JSON.stringify(vaultData), activePassword));
             Terminal.modal.close('editModal');
             renderVault();
         }
@@ -815,13 +881,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function deleteEntry(id) {
             if(confirm("> WARNING: Irrevocably destroy this payload?")) {
                 vaultData = vaultData.filter(i => i.id !== id);
-                await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
+                await syncToSatellites(encryptPayload(JSON.stringify(vaultData), activePassword));
                 renderVault();
             }
         }
 
         function renderVault() {
-            updateSatelliteBadge(); // Selalu refresh diagnostic badge
+            updateSatelliteBadge(); 
 
             const container = document.getElementById('vault-items');
             const query = document.getElementById('live-search').value.toLowerCase();
@@ -847,12 +913,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
             if (query.trim() !== '') {
                 displayData = displayData.filter(item => {
-                    const str = `
-                        ${item.title || ''} ${item.content || ''} 
-                        ${item.email || ''} ${item.url || ''} 
-                        ${item.cardName || ''} ${item.cardNumber || ''} 
-                        ${item.wifiPass || ''}
-                    `.toLowerCase();
+                    const str = `${item.title || ''} ${item.content || ''} ${item.email || ''} ${item.url || ''} ${item.cardName || ''} ${item.cardNumber || ''} ${item.wifiPass || ''}`.toLowerCase();
                     return str.includes(query);
                 });
             }
