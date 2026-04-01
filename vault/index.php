@@ -59,7 +59,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3 mt-4">
             <div>
                 <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> SECURE: VAULT</h2>
-                <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE ENCRYPTION ENABLED.</div>
+                <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE MULTI-CLOUD ENABLED.</div>
             </div>
             <div>
                 <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Dashboard">[ ➜ ] RETURN_OS</a>
@@ -68,19 +68,36 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
         <div id="pane-setup" class="pane t-card mb-4 text-center p-4">
             <h3 class="text-success mb-3">> PROTOCOL: COLD START</h3>
-            <p class="text-muted fs-small mb-4">Unrecognized terminal. Inject GitHub coordinates to establish secure connection.</p>
+            <p class="text-muted fs-small mb-4">Unrecognized terminal. Inject cloud coordinates to establish secure connection.</p>
+            
             <div class="t-center-box text-left">
-                <label class="t-form-label">> GITHUB_PAT_TOKEN</label>
-                <input type="password" id="setup-token" class="t-input mb-3" style="letter-spacing: 1px;">
-                <label class="t-form-label">> GIST_ID (Or Full URL)</label>
-                <input type="text" id="setup-gist" class="t-input mb-4" style="letter-spacing: 1px;">
-                <button onclick="saveSetup()" class="t-btn t-btn-block font-bold t-glow">[ INJECT_COORDINATES ]</button>
+                <div class="t-border-bottom pb-3 mb-3">
+                    <span class="text-success font-bold">> PRIMARY SATELLITE (GITHUB GIST)</span>
+                    <div class="mt-2">
+                        <label class="t-form-label">> GITHUB_PAT_TOKEN</label>
+                        <input type="password" id="setup-gh-token" class="t-input mb-3" style="letter-spacing: 1px;">
+                        <label class="t-form-label">> GITHUB_GIST_ID</label>
+                        <input type="text" id="setup-gh-id" class="t-input mb-2" style="letter-spacing: 1px;">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <span class="text-warning font-bold">> FALLBACK SATELLITE (GITLAB SNIPPET)</span>
+                    <div class="mt-2">
+                        <label class="t-form-label">> GITLAB_PRIVATE_TOKEN</label>
+                        <input type="password" id="setup-gl-token" class="t-input mb-3" placeholder="glpat-..." style="letter-spacing: 1px;">
+                        <label class="t-form-label">> GITLAB_SNIPPET_ID</label>
+                        <input type="text" id="setup-gl-id" class="t-input m-0" style="letter-spacing: 1px;">
+                    </div>
+                </div>
+
+                <button onclick="saveSetup()" class="t-btn t-btn-block font-bold t-glow">[ ESTABLISH_DUAL_LINK ]</button>
             </div>
         </div>
 
         <div id="pane-unlock" class="pane t-card mb-4 text-center p-4">
             <h3 class="mb-3 text-danger t-flicker">> VAULT_LOCKED</h3>
-            <p class="text-muted fs-small mb-4">Terminal linked to Satellite. Awaiting Master Decryption Key.</p>
+            <p class="text-muted fs-small mb-4">Terminal linked to Satellites. Awaiting Master Decryption Key.</p>
             <div class="t-center-box">
                 <input type="password" id="master-password" class="t-input text-center text-success font-bold mb-4" style="letter-spacing: 2px; font-size: 1.2rem;" placeholder="ENTER MASTER PASSWORD..." onkeypress="if(event.key === 'Enter') unlockVault()">
                 <button onclick="unlockVault()" id="btn-unlock" class="t-btn t-btn-block font-bold t-glow">[ DECRYPT_PAYLOAD ]</button>
@@ -91,8 +108,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         </div>
 
         <div id="pane-init" class="pane t-card mb-4 text-center p-4" style="border-color: var(--t-yellow);">
-            <h3 class="mb-3 text-warning t-flicker">> SATELLITE_BLANK</h3>
-            <p class="text-muted fs-small mb-4">Detected empty payload in Gist. Please create a new Master Password to initialize your Vault.</p>
+            <h3 class="mb-3 text-warning t-flicker">> SATELLITES_BLANK</h3>
+            <p class="text-muted fs-small mb-4">Detected empty payloads in Clouds. Please create a new Master Password to initialize your Vault.</p>
             <div class="t-center-box text-left">
                 <label class="t-form-label text-warning">> CREATE_MASTER_PASSWORD</label>
                 <input type="password" id="init-password" class="t-input mb-3 text-warning font-bold" style="letter-spacing: 2px;">
@@ -186,10 +203,16 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 <label class="t-form-label mt-3">> PRIVATE_NOTES / DETAILS</label>
                 <textarea id="entry-content" class="t-textarea mb-4" rows="3" placeholder="Additional details..."></textarea>
                 
-                <button onclick="saveEntry()" class="t-btn t-btn-block" id="btn-save">[ ENCRYPT & UPLOAD TO SATELLITE ]</button>
+                <button onclick="saveEntry()" class="t-btn t-btn-block" id="btn-save">[ ENCRYPT & SYNC TO SATELLITES ]</button>
             </div>
 
             <div class="mb-4 t-card" style="border-style: dashed; background: transparent; padding: 15px;">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 t-border-bottom">
+                    <div class="fs-small text-muted">> DATA_SOURCE: <span id="badge-satellite" class="t-badge primary">UNKNOWN</span></div>
+                    <div id="badge-sync" class="fs-small text-warning font-bold t-flicker" style="display:none;">> PENDING UPLOAD</div>
+                </div>
+
                 <div class="d-flex align-items-center gap-2 mb-3">
                     <span class="text-success font-bold">></span>
                     <input type="text" id="live-search" class="t-input cli-search w-100 m-0" placeholder="QUERY_VAULT_DATA..." onkeyup="renderVault()">
@@ -300,12 +323,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <script src="../assets/terminal.js"></script>
 
     <script>
+        // MULTI-CLOUD CREDENTIALS
         let ghToken = localStorage.getItem('bunker_gh_token');
         let gistId = localStorage.getItem('bunker_gist_id');
+        let glToken = localStorage.getItem('bunker_gl_token');
+        let snippetId = localStorage.getItem('bunker_gl_id');
+
         let vaultData = [];
         let activePassword = '';
         let satelliteState = 'LOCKED';
         let currentFilter = 'ALL';
+        let activeSatellite = 'UNKNOWN'; // Menyimpan info darimana data diambil
 
         document.addEventListener("DOMContentLoaded", () => {
             Terminal.splash.close(1000);
@@ -319,19 +347,45 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 syncPendingData();
             });
             
-            // Atur form saat pertama kali dimuat
             toggleFormMode('add');
         });
 
+        // ================= DIAGNOSTIK UI =================
+        function updateSatelliteBadge() {
+            const badge = document.getElementById('badge-satellite');
+            if(badge) {
+                if(activeSatellite === 'GITHUB') {
+                    badge.className = 't-badge success'; 
+                    badge.innerText = 'GITHUB GIST';
+                } else if(activeSatellite === 'GITLAB') {
+                    badge.className = 't-badge warning'; 
+                    badge.innerText = 'GITLAB SNIPPET';
+                } else if(activeSatellite === 'LOCAL_CACHE') {
+                    badge.className = 't-badge danger t-flicker'; 
+                    badge.innerText = 'LOCAL CACHE (OFFLINE)';
+                } else {
+                    badge.className = 't-badge primary'; 
+                    badge.innerText = 'UNKNOWN';
+                }
+            }
+            const syncBadge = document.getElementById('badge-sync');
+            if(syncBadge) {
+                // Tampilkan text "PENDING UPLOAD" jika masih ada hutang sinkronisasi
+                syncBadge.style.display = (localStorage.getItem('bunker_vault_pending_sync') === 'true') ? 'block' : 'none';
+            }
+        }
+
         // ================= UI CONTROLS =================
+        function cleanUrl(val) {
+            let cl = val.replace(/\s+/g, '');
+            if (cl.includes('/')) return cl.split('/').pop();
+            return cl;
+        }
 
         function setFilter(filterType, btnElement) {
             currentFilter = filterType;
-            
-            // Ubah gaya tombol aktif
             document.querySelectorAll('.filter-tab').forEach(btn => btn.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
-            
             renderVault();
         }
 
@@ -342,19 +396,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     Terminal.accordion(activeBtn); // Tutup yang lain
                 }
             });
-            Terminal.accordion(btn); // Buka/Tutup yang diklik
+            Terminal.accordion(btn);
         }
 
         function toggleFormMode(mode) {
             const prefix = mode === 'add' ? 'entry' : 'edit';
             const type = document.getElementById(`${prefix}-type`).value;
             
-            // Sembunyikan semua field dinamis terlebih dahulu
             document.querySelectorAll(mode === 'add' ? '#add-form .dynamic-fields' : '#editModal .dynamic-fields').forEach(el => {
                 el.style.display = 'none';
             });
             
-            // Tampilkan field yang sesuai dengan tipe (kecuali NOTE, karena NOTE hanya pakai text area utama)
             if (type !== 'NOTE') {
                 const targetField = document.getElementById(`${mode}-fields-${type}`);
                 if (targetField) targetField.style.display = 'block';
@@ -406,38 +458,64 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
         }
 
-        // ================= SATELLITE COMMS =================
+        // ================= SATELLITE COMMS (DUAL READ) =================
+        async function fetchFromSatellites() {
+            let content = null;
+
+            // 1. Coba GitHub (Satelit Utama)
+            try {
+                const resGH = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
+                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}` }
+                });
+                const dataGH = await resGH.json();
+                if (dataGH.message) throw new Error("GH_REJECTED");
+                
+                if (dataGH.files && dataGH.files["bunker_vault.enc"]) {
+                    content = dataGH.files["bunker_vault.enc"].content;
+                    Terminal.toast('> CONNECTED TO GITHUB', 'normal');
+                    return { content: content, source: 'GITHUB' };
+                }
+            } catch(e) {}
+
+            // 2. Coba GitLab (Satelit Cadangan)
+            if (glToken && snippetId) {
+                try {
+                    const resGL = await fetch(`https://gitlab.com/api/v4/snippets/${snippetId}`, { 
+                        headers: { "PRIVATE-TOKEN": glToken }
+                    });
+                    const dataGL = await resGL.json();
+                    if(dataGL.files) {
+                        const fileMeta = dataGL.files.find(f => f.path === "bunker_vault.enc");
+                        if(fileMeta) {
+                            const rawRes = await fetch(fileMeta.raw_url, { headers: { "PRIVATE-TOKEN": glToken }});
+                            content = await rawRes.text();
+                            Terminal.toast('> GITHUB DOWN. ROUTED TO GITLAB.', 'warning');
+                            return { content: content, source: 'GITLAB' };
+                        }
+                    }
+                } catch(e) {}
+            }
+            throw new Error("ALL_SATELLITES_UNREACHABLE");
+        }
 
         async function checkSatelliteStatus() {
             if (!ghToken || !gistId) { updateUI(); return; }
             
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
-                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}` }
-                });
-                const data = await res.json();
-                if (data.message) throw new Error("API_REJECTED: " + data.message);
-                
-                if (!data.files || !data.files["bunker_vault.enc"]) {
-                    satelliteState = 'INIT';
-                } else {
-                    let content = data.files["bunker_vault.enc"].content;
-                    localStorage.setItem('bunker_vault_cache', content);
-                    satelliteState = (content.trim() === 'INIT' || content === '') ? 'INIT' : 'LOCKED';
-                }
+                let result = await fetchFromSatellites();
+                activeSatellite = result.source;
+                localStorage.setItem('bunker_vault_cache', result.content);
+                satelliteState = (result.content.trim() === 'INIT' || result.content === '') ? 'INIT' : 'LOCKED';
                 updateUI();
             } catch(e) {
-                console.error("> SYS_LOG (CHECK_STATUS):", e);
-                if (e.message && e.message.includes("API_REJECTED")) {
-                    Terminal.toast("SATELLITE REJECTED. CHECK TOKEN/GIST.", 'danger');
+                const cachedContent = localStorage.getItem('bunker_vault_cache');
+                if (cachedContent) {
+                    Terminal.toast("> CLOUDS UNREACHABLE. USING LOCAL CACHE.", 'warning');
+                    activeSatellite = 'LOCAL_CACHE';
+                    satelliteState = (cachedContent.trim() === 'INIT' || cachedContent === '') ? 'INIT' : 'LOCKED';
                 } else {
-                    const cachedContent = localStorage.getItem('bunker_vault_cache');
-                    if (cachedContent) {
-                        Terminal.toast("> SATELLITE UNREACHABLE. USING LOCAL CACHE.", 'warning');
-                        satelliteState = (cachedContent.trim() === 'INIT' || cachedContent === '') ? 'INIT' : 'LOCKED';
-                    } else {
-                        satelliteState = 'LOCKED';
-                    }
+                    activeSatellite = 'UNKNOWN';
+                    satelliteState = 'LOCKED';
                 }
                 updateUI();
             }
@@ -446,47 +524,97 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function syncPendingData() {
             if (localStorage.getItem('bunker_vault_pending_sync') === 'true') {
                 const cachedPayload = localStorage.getItem('bunker_vault_cache');
-                if (cachedPayload && ghToken && gistId) {
-                    Terminal.toast('> DETECTED OFFLINE CHANGES. SYNCING TO SATELLITE...', 'warning');
-                    try {
-                        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                            method: 'PATCH',
-                            headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}`, "Content-Type": "application/json" },
-                            body: JSON.stringify({ files: { "bunker_vault.enc": { content: cachedPayload } } })
-                        });
-                        if(res.ok) {
-                            localStorage.removeItem('bunker_vault_pending_sync');
-                            Terminal.toast('> SYNC COMPLETE. SATELLITE UPDATED.', 'success');
-                        }
-                    } catch(e) {
-                        console.warn("> SYNC FAILED. WILL RETRY LATER.");
-                    }
+                // Jika sedang pending, paksa sync pakai data cache lokal
+                if (cachedPayload && ghToken) {
+                    Terminal.toast('> DETECTED OFFLINE CHANGES. SYNCING TO SATELLITES...', 'warning');
+                    await syncToSatellites(cachedPayload);
                 }
             }
         }
 
-        function saveSetup() {
-            let t = document.getElementById('setup-token').value.replace(/\s+/g, '');
-            let g = document.getElementById('setup-gist').value.replace(/\s+/g, '');
-            if (g.includes('/')) { g = g.split('/').pop(); }
+        // --- PROTOCOL DUAL-WRITE (SYNC / SAVE) ---
+        async function syncToSatellites(encryptedPayload) {
+            Terminal.splash.show('> ENCRYPTING & SYNCING TO SATELLITES...');
+            localStorage.setItem('bunker_vault_cache', encryptedPayload);
+            const promises = [];
 
-            if(t && g) {
-                Terminal.splash.show('> LINKING TO SATELLITE...');
+            // Target 1: GitHub Gist (Pasti bunker_vault.enc)
+            if (ghToken && gistId) {
+                promises.push(fetch(`https://api.github.com/gists/${gistId}`, {
+                    method: 'PATCH',
+                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ files: { "bunker_vault.enc": { content: encryptedPayload } } })
+                }).then(res => { if(!res.ok) throw new Error(); return 'GH'; }));
+            }
+
+            // Target 2: GitLab Snippet (Pasti bunker_vault.enc)
+            if (glToken && snippetId) {
+                promises.push(fetch(`https://gitlab.com/api/v4/snippets/${snippetId}`, {
+                    method: 'PUT',
+                    headers: { "PRIVATE-TOKEN": glToken, "Content-Type": "application/json" },
+                    body: JSON.stringify({ files: [{ action: "update", file_path: "bunker_vault.enc", content: encryptedPayload }] })
+                }).then(res => { if(!res.ok) throw new Error(); return 'GL'; }));
+            }
+
+            if(promises.length === 0) return;
+
+            try {
+                // Tembak secara paralel!
+                const results = await Promise.allSettled(promises);
+                const success = results.filter(r => r.status === 'fulfilled').length;
+
+                if (success === 0) {
+                    throw new Error("ALL_FAILED");
+                } else if (success < promises.length) {
+                    // Split-Brain Mitigation: Ingat hutang upload jika ada yang gagal
+                    Terminal.toast('PARTIAL SYNC. ONE SATELLITE DOWN.', 'warning');
+                    localStorage.setItem('bunker_vault_pending_sync', 'true');
+                } else {
+                    // Semua sukses, hapus hutang upload
+                    Terminal.toast('DUAL-SATELLITE SYNC SUCCESSFUL', 'normal');
+                    localStorage.removeItem('bunker_vault_pending_sync');
+                }
+            } catch (e) {
+                localStorage.setItem('bunker_vault_pending_sync', 'true');
+                Terminal.toast('SAVED LOCALLY. PENDING SYNC (OFFLINE)', 'warning');
+            }
+            updateSatelliteBadge(); // Refresh status badge UI
+            Terminal.splash.close(500);
+        }
+
+        function saveSetup() {
+            let tGH = document.getElementById('setup-gh-token').value.replace(/\s+/g, '');
+            let iGH = cleanUrl(document.getElementById('setup-gh-id').value);
+            let tGL = document.getElementById('setup-gl-token').value.replace(/\s+/g, '');
+            let iGL = cleanUrl(document.getElementById('setup-gl-id').value);
+
+            if(tGH && iGH) {
+                Terminal.splash.show('> LINKING TO SATELLITES...');
                 setTimeout(() => {
-                    localStorage.setItem('bunker_gh_token', t);
-                    localStorage.setItem('bunker_gist_id', g);
-                    ghToken = t; gistId = g;
+                    localStorage.setItem('bunker_gh_token', tGH);
+                    localStorage.setItem('bunker_gist_id', iGH);
+                    
+                    if(tGL && iGL) { 
+                        localStorage.setItem('bunker_gl_token', tGL); 
+                        localStorage.setItem('bunker_gl_id', iGL); 
+                    }
+                    
+                    ghToken = tGH; gistId = iGH;
+                    glToken = tGL; snippetId = iGL;
+                    
                     checkSatelliteStatus();
                     Terminal.splash.close(500);
                 }, 800);
+            } else {
+                Terminal.toast('GITHUB CREDENTIALS ARE REQUIRED', 'danger');
             }
         }
 
         function purgeSetup() {
-            if(confirm("> WARNING: Destroy terminal link coordinates?")) {
-                localStorage.removeItem('bunker_gh_token');
-                localStorage.removeItem('bunker_gist_id');
-                ghToken = null; gistId = null;
+            if(confirm("> WARNING: Destroy all terminal link coordinates?")) {
+                localStorage.removeItem('bunker_gh_token'); localStorage.removeItem('bunker_gist_id');
+                localStorage.removeItem('bunker_gl_token'); localStorage.removeItem('bunker_gl_id');
+                ghToken = null; gistId = null; glToken = null; snippetId = null;
                 satelliteState = 'LOCKED';
                 updateUI();
             }
@@ -506,8 +634,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             document.getElementById('init-password').value = '';
             document.getElementById('init-confirm').value = '';
             
-            Terminal.toast('VAULT FORMATTED. UPLOADING EMPTY PAYLOAD...', 'warning');
-            await saveToGitHub();
+            Terminal.toast('VAULT FORMATTED. SYNCING CLOUDS...', 'warning');
+            const encrypted = CryptoJS.AES.encrypt("[]", activePassword).toString();
+            await syncToSatellites(encrypted);
             updateUI();
         }
 
@@ -519,25 +648,18 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             let content = '';
             
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
-                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}` }
-                });
-                const data = await res.json();
-                if (data.message) throw new Error("API_REJECTED: " + data.message);
-                if (!data.files || !data.files["bunker_vault.enc"]) throw new Error("FILE_MISSING: bunker_vault.enc not found in Gist!");
-
-                content = data.files["bunker_vault.enc"].content;
+                let result = await fetchFromSatellites();
+                content = result.content;
+                activeSatellite = result.source;
                 localStorage.setItem('bunker_vault_cache', content);
             } catch(e) {
-                if (e.message && (e.message.includes("API_REJECTED") || e.message.includes("FILE_MISSING"))) {
-                    Terminal.toast(e.message, 'danger');
-                    Terminal.splash.close(500); return;
-                }
                 content = localStorage.getItem('bunker_vault_cache');
                 if (!content) {
-                    Terminal.toast('SYS_ERR: FETCH FAILED. CHECK CONSOLE.', 'danger');
+                    Terminal.toast('SYS_ERR: FETCH FAILED. NO CACHE.', 'danger');
+                    activeSatellite = 'UNKNOWN';
                     Terminal.splash.close(500); return;
                 }
+                activeSatellite = 'LOCAL_CACHE';
                 Terminal.toast('DECRYPTING FROM LOCAL CACHE...', 'warning');
             }
 
@@ -553,8 +675,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 
                 vaultData = JSON.parse(decrypted);
                 
-                // --- AUTO MIGRATION SCRIPT ---
-                // Mengubah semua tipe 'PASSWORD' lama menjadi 'LOGIN' agar kompatibel dengan sistem baru
+                // AUTO MIGRATION (Lama ke Baru)
                 let isMigrated = false;
                 vaultData = vaultData.map(item => {
                     if (item.type === 'PASSWORD') {
@@ -570,8 +691,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 updateUI();
                 Terminal.toast('ACCESS GRANTED', 'normal');
                 
-                if(isMigrated) saveToGitHub(); // Simpan diam-diam format baru ke satelit
-                
+                if(isMigrated) {
+                    syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
+                }
             } catch(e) {
                 Terminal.toast('INVALID MASTER PASSWORD', 'danger');
             }
@@ -588,32 +710,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             Terminal.toast('VAULT SECURED', 'warning');
         }
 
-        async function saveToGitHub() {
-            Terminal.splash.show('> ENCRYPTING & UPLOADING TO SATELLITE...');
-            
-            try {
-                const payloadStr = JSON.stringify(vaultData);
-                const encrypted = CryptoJS.AES.encrypt(payloadStr, activePassword).toString();
-                
-                localStorage.setItem('bunker_vault_cache', encrypted);
-                
-                const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                    method: 'PATCH',
-                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ files: { "bunker_vault.enc": { content: encrypted } } })
-                });
-                
-                if(!res.ok) throw new Error("Failed to upload payload.");
-                
-                localStorage.removeItem('bunker_vault_pending_sync');
-                Terminal.toast('UPLOAD SUCCESSFUL', 'normal');
-            } catch(e) {
-                localStorage.setItem('bunker_vault_pending_sync', 'true');
-                Terminal.toast('SAVED LOCALLY. PENDING SATELLITE UPLOAD (OFFLINE)', 'warning');
-            }
-            Terminal.splash.close(500);
-        }
-
         // ================= CRUD OPERATIONS =================
 
         async function saveEntry() {
@@ -628,7 +724,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 date: new Date().toISOString().split('T')[0]
             };
 
-            // Tangkap data berdasarkan tipe form
             if (type === 'LOGIN') {
                 newEntry.email = document.getElementById('entry-login-email').value.trim();
                 newEntry.password = document.getElementById('entry-login-pass').value.trim();
@@ -644,9 +739,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
             
             vaultData.unshift(newEntry);
-            await saveToGitHub();
+            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
             
-            // Bersihkan input
             document.querySelectorAll('#add-form input, #add-form textarea').forEach(el => el.value = '');
             toggleAddForm();
             renderVault();
@@ -656,7 +750,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const item = vaultData.find(i => i.id === id);
             if(!item) return;
 
-            // Bersihkan semua input di modal dulu
             document.querySelectorAll('#editModal input:not([type="hidden"]), #editModal textarea').forEach(el => el.value = '');
 
             document.getElementById('edit-id').value = item.id;
@@ -692,17 +785,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             
             if(!title) { Terminal.toast('TITLE IS REQUIRED', 'danger'); return; }
 
-            // Reset semua properti spesifik lama
             delete vaultData[index].email; delete vaultData[index].password; delete vaultData[index].url;
             delete vaultData[index].cardName; delete vaultData[index].cardNumber; delete vaultData[index].cardExpiry; delete vaultData[index].cardCvc; delete vaultData[index].cardPin;
             delete vaultData[index].wifiPass;
 
-            // Update data dasar
             vaultData[index].type = type;
             vaultData[index].title = title;
             vaultData[index].content = document.getElementById('edit-content').value.trim();
 
-            // Masukkan data baru sesuai tipe
             if (type === 'LOGIN') {
                 vaultData[index].email = document.getElementById('edit-login-email').value.trim();
                 vaultData[index].password = document.getElementById('edit-login-pass').value.trim();
@@ -717,7 +807,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 vaultData[index].wifiPass = document.getElementById('edit-wifi-pass').value.trim();
             }
 
-            await saveToGitHub();
+            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
             Terminal.modal.close('editModal');
             renderVault();
         }
@@ -725,17 +815,18 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function deleteEntry(id) {
             if(confirm("> WARNING: Irrevocably destroy this payload?")) {
                 vaultData = vaultData.filter(i => i.id !== id);
-                await saveToGitHub();
+                await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(vaultData), activePassword).toString());
                 renderVault();
             }
         }
 
         function renderVault() {
+            updateSatelliteBadge(); // Selalu refresh diagnostic badge
+
             const container = document.getElementById('vault-items');
             const query = document.getElementById('live-search').value.toLowerCase();
             container.innerHTML = '';
             
-            // --- UPDATE STATISTIK TABS ---
             const countAll = vaultData.length;
             const countLogin = vaultData.filter(i => i.type === 'LOGIN').length;
             const countNote = vaultData.filter(i => i.type === 'NOTE').length;
@@ -747,16 +838,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             document.getElementById('tab-NOTE').innerText = `[ NOTE: ${countNote} ]`;
             document.getElementById('tab-CARD').innerText = `[ CARD: ${countCard} ]`;
             document.getElementById('tab-WIFI').innerText = `[ WI-FI: ${countWifi} ]`;
-            // -----------------------------
 
             let displayData = vaultData;
 
-            // 1. Terapkan Filter Kategori (Tabs)
             if (currentFilter !== 'ALL') {
                 displayData = displayData.filter(item => item.type === currentFilter);
             }
 
-            // 2. Terapkan Filter Pencarian (Deep Search)
             if (query.trim() !== '') {
                 displayData = displayData.filter(item => {
                     const str = `
@@ -775,7 +863,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
 
             displayData.forEach(item => {
-                // Tentukan Warna Badge Berdasarkan Tipe
                 let badgeClass = 'primary';
                 if (item.type === 'LOGIN') badgeClass = 'danger';
                 if (item.type === 'CARD') badgeClass = 'warning';
@@ -783,7 +870,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 
                 let detailHtml = '';
                 
-                // Susun HTML Berdasarkan Tipe Data
                 if (item.type === 'LOGIN') {
                     const eHtml = item.email ? `<div class="mb-2"><span class="text-muted">> ID/EMAIL:</span> <span class="text-success copy-target" onclick="copyText('${item.email}', this)">${item.email}</span></div>` : '';
                     const pHtml = item.password ? `<div class="mb-2"><span class="text-muted">> PASS_KEY:</span> <span class="blur-text text-success" onclick="copyText('${item.password}', this)">${item.password}</span></div>` : '';

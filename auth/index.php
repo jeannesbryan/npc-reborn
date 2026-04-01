@@ -29,7 +29,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
     <div id="splash-overlay" class="t-splash">
         <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor;">
-            > INITIALIZING_TOKEN_AUTH<span class="t-loading-dots"></span>
+            > INITIALIZING_DUAL_SATELLITE_AUTH<span class="t-loading-dots"></span>
         </div>
     </div>
 
@@ -38,7 +38,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <div class="d-flex justify-content-between align-items-center mb-4 t-border-bottom pb-3 mt-4">
             <div>
                 <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> TOKEN: AUTH</h2>
-                <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE 2FA GENERATOR.</div>
+                <div class="text-muted fs-small mt-1">> ZERO-KNOWLEDGE 2FA MULTI-CLOUD ENABLED.</div>
             </div>
             <div>
                 <a href="../bunker/dashboard.php" class="t-btn danger" title="Return to Dashboard">[ ➜ ] RETURN_OS</a>
@@ -47,19 +47,36 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
         <div id="pane-setup" class="t-pane t-card mb-4 text-center p-4">
             <h3 class="text-success mb-3">> PROTOCOL: COLD START</h3>
-            <p class="text-muted fs-small mb-4">Unrecognized terminal. Inject GitHub coordinates to establish secure connection.</p>
+            <p class="text-muted fs-small mb-4">Unrecognized terminal. Inject cloud coordinates to establish secure connection.</p>
+            
             <div class="t-center-box text-left">
-                <label class="t-form-label">> GITHUB_PAT_TOKEN</label>
-                <input type="password" id="setup-token" class="t-input mb-3" style="letter-spacing: 1px;">
-                <label class="t-form-label">> GIST_ID (Or Full URL)</label>
-                <input type="text" id="setup-gist" class="t-input mb-4" style="letter-spacing: 1px;">
-                <button onclick="saveSetup()" class="t-btn t-btn-block font-bold t-glow">[ INJECT_COORDINATES ]</button>
+                <div class="t-border-bottom pb-3 mb-3">
+                    <span class="text-success font-bold">> PRIMARY SATELLITE (GITHUB GIST)</span>
+                    <div class="mt-2">
+                        <label class="t-form-label">> GITHUB_PAT_TOKEN</label>
+                        <input type="password" id="setup-gh-token" class="t-input mb-3" style="letter-spacing: 1px;">
+                        <label class="t-form-label">> GITHUB_GIST_ID</label>
+                        <input type="text" id="setup-gh-id" class="t-input mb-2" style="letter-spacing: 1px;">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <span class="text-warning font-bold">> FALLBACK SATELLITE (GITLAB SNIPPET)</span>
+                    <div class="mt-2">
+                        <label class="t-form-label">> GITLAB_PRIVATE_TOKEN</label>
+                        <input type="password" id="setup-gl-token" class="t-input mb-3" placeholder="glpat-..." style="letter-spacing: 1px;">
+                        <label class="t-form-label">> GITLAB_SNIPPET_ID</label>
+                        <input type="text" id="setup-gl-id" class="t-input m-0" style="letter-spacing: 1px;">
+                    </div>
+                </div>
+
+                <button onclick="saveSetup()" class="t-btn t-btn-block font-bold t-glow">[ ESTABLISH_DUAL_LINK ]</button>
             </div>
         </div>
 
         <div id="pane-unlock" class="t-pane t-card mb-4 text-center p-4">
             <h3 class="mb-3 text-danger t-flicker">> TOKEN_AUTH_LOCKED</h3>
-            <p class="text-muted fs-small mb-4">Terminal linked. Awaiting Master Decryption Key.</p>
+            <p class="text-muted fs-small mb-4">Terminal linked to Satellites. Awaiting Master Decryption Key.</p>
             <div class="t-center-box">
                 <input type="password" id="master-password" class="t-input text-center text-success font-bold mb-4" style="letter-spacing: 2px; font-size: 1.2rem;" placeholder="ENTER MASTER PASSWORD..." onkeypress="if(event.key === 'Enter') unlockCore()">
                 <button onclick="unlockCore()" id="btn-unlock" class="t-btn t-btn-block font-bold t-glow">[ DECRYPT_KEYS ]</button>
@@ -70,8 +87,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         </div>
 
         <div id="pane-init" class="t-pane t-card mb-4 text-center p-4" style="border-color: var(--t-yellow);">
-            <h3 class="mb-3 text-warning t-flicker">> SATELLITE_BLANK</h3>
-            <p class="text-muted fs-small mb-4">Detected empty payload in Gist. Please create a new Master Password to initialize your 2FA Vault.</p>
+            <h3 class="mb-3 text-warning t-flicker">> SATELLITES_BLANK</h3>
+            <p class="text-muted fs-small mb-4">Detected empty payloads in Clouds. Please create a new Master Password to initialize your 2FA Vault.</p>
             <div class="t-center-box text-left">
                 <label class="t-form-label text-warning">> CREATE_MASTER_PASSWORD</label>
                 <input type="password" id="init-password" class="t-input mb-3 text-warning font-bold" style="letter-spacing: 2px;">
@@ -111,12 +128,18 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <input type="password" id="entry-secret" class="t-input m-0" placeholder="JBSWY3DPEHPK3PXP" style="letter-spacing: 2px;">
                     <button type="button" class="t-input-action-btn" onclick="Terminal.toggleInputAction('entry-secret', this)">[ SHOW ]</button>
                 </div>
-                <button onclick="saveEntry()" class="t-btn t-btn-block">[ ENCRYPT & UPLOAD TO SATELLITE ]</button>
+                <button onclick="saveEntry()" class="t-btn t-btn-block">[ ENCRYPT & SYNC TO SATELLITES ]</button>
             </div>
 
-            <div class="mb-4 d-flex align-items-center gap-2 p-3 t-card" style="border-style: dashed; background: transparent;">
-                <span class="text-success font-bold">></span>
-                <input type="text" id="live-search" class="t-input m-0 border-0" placeholder="QUERY_AUTH_DATA..." onkeyup="filterAuth(this.value)" style="box-shadow: none;">
+            <div class="mb-4 d-flex flex-column gap-3 p-3 t-card" style="border-style: dashed; background: transparent;">
+                <div class="d-flex justify-content-between align-items-center pb-2 t-border-bottom">
+                    <div class="fs-small text-muted">> DATA_SOURCE: <span id="badge-satellite" class="t-badge primary">UNKNOWN</span></div>
+                    <div id="badge-sync" class="fs-small text-warning font-bold t-flicker" style="display:none;">> PENDING UPLOAD</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-success font-bold">></span>
+                    <input type="text" id="live-search" class="t-input m-0 border-0" placeholder="QUERY_AUTH_DATA..." onkeyup="filterAuth(this.value)" style="box-shadow: none; flex: 1;">
+                </div>
             </div>
 
             <div class="t-grid t-grid-2" id="auth-items"></div>
@@ -160,8 +183,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <script src="../assets/terminal.js"></script>
 
     <script>
+        // MULTI-CLOUD CREDENTIALS
         let ghToken = localStorage.getItem('bunker_gh_token');
         let gistId = localStorage.getItem('bunker_gist_id');
+        let glToken = localStorage.getItem('bunker_gl_token');
+        let snippetId = localStorage.getItem('bunker_gl_id');
+
         let authData = [];
         let activePassword = '';
         
@@ -171,11 +198,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         let timeRemaining = INACTIVITY_LIMIT;
         
         let satelliteState = 'LOCKED';
+        let activeSatellite = 'UNKNOWN';
 
         document.addEventListener("DOMContentLoaded", () => {
             Terminal.splash.close(1000);
             
-            // 1. Cek apakah ada data antrean sebelum mengecek status satelit
             syncPendingData().then(() => {
                 checkSatelliteStatus();
             });
@@ -184,12 +211,38 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 document.addEventListener(evt, resetInactivityTimer);
             });
 
-            // 2. RADAR OTOMATIS: Begitu browser mendeteksi internet nyala, langsung jalankan Sync!
             window.addEventListener('online', () => {
                 Terminal.toast('> INTERNET CONNECTION RESTORED.', 'normal');
                 syncPendingData();
             });
         });
+
+        // ================= DIAGNOSTIK UI =================
+        function updateSatelliteBadge() {
+            const badge = document.getElementById('badge-satellite');
+            if(badge) {
+                if(activeSatellite === 'GITHUB') {
+                    badge.className = 't-badge success'; badge.innerText = 'GITHUB GIST';
+                } else if(activeSatellite === 'GITLAB') {
+                    badge.className = 't-badge warning'; badge.innerText = 'GITLAB SNIPPET';
+                } else if(activeSatellite === 'LOCAL_CACHE') {
+                    badge.className = 't-badge danger t-flicker'; badge.innerText = 'LOCAL CACHE (OFFLINE)';
+                } else {
+                    badge.className = 't-badge primary'; badge.innerText = 'UNKNOWN';
+                }
+            }
+            const syncBadge = document.getElementById('badge-sync');
+            if(syncBadge) {
+                syncBadge.style.display = (localStorage.getItem('bunker_auth_pending_sync') === 'true') ? 'block' : 'none';
+            }
+        }
+
+        // ================= HELPER & LOGIC =================
+        function cleanUrl(val) {
+            let cl = val.replace(/\s+/g, '');
+            if (cl.includes('/')) return cl.split('/').pop();
+            return cl;
+        }
 
         function copyTotp(text, element) {
             navigator.clipboard.writeText(text.replace(/\s/g, '')).then(() => {
@@ -236,102 +289,159 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
         }
 
+        // --- PROTOCOL DUAL-READ (FETCH) ---
+        async function fetchFromSatellites() {
+            let content = null;
+            // 1. Try GitHub (Primary)
+            try {
+                const resGH = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
+                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}` }
+                });
+                const dataGH = await resGH.json();
+                if (dataGH.message) throw new Error("GH_REJECTED");
+                
+                if (dataGH.files && dataGH.files["bunker_auth.enc"]) {
+                    content = dataGH.files["bunker_auth.enc"].content;
+                    Terminal.toast('> CONNECTED TO GITHUB', 'normal');
+                    return { content: content, source: 'GITHUB' };
+                }
+            } catch(e) {}
+
+            // 2. Try GitLab (Fallback)
+            if (glToken && snippetId) {
+                try {
+                    const resGL = await fetch(`https://gitlab.com/api/v4/snippets/${snippetId}`, { 
+                        headers: { "PRIVATE-TOKEN": glToken }
+                    });
+                    const dataGL = await resGL.json();
+                    if(dataGL.files) {
+                        const fileMeta = dataGL.files.find(f => f.path === "bunker_auth.enc");
+                        if(fileMeta) {
+                            const rawRes = await fetch(fileMeta.raw_url, { headers: { "PRIVATE-TOKEN": glToken }});
+                            content = await rawRes.text();
+                            Terminal.toast('> GITHUB DOWN. ROUTED TO GITLAB.', 'warning');
+                            return { content: content, source: 'GITLAB' };
+                        }
+                    }
+                } catch(e) {}
+            }
+            throw new Error("ALL_SATELLITES_UNREACHABLE");
+        }
+
         async function checkSatelliteStatus() {
             if (!ghToken || !gistId) { updateUI(); return; }
             
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
-                    headers: { 
-                        "Accept": "application/vnd.github.v3+json",
-                        "Authorization": `token ${ghToken}` 
-                    }
-                });
-                
-                const data = await res.json();
-                if (data.message) throw new Error("API_REJECTED: " + data.message);
-                
-                if (!data.files || !data.files["bunker_auth.enc"]) {
-                    satelliteState = 'INIT';
-                } else {
-                    let content = data.files["bunker_auth.enc"].content;
-                    localStorage.setItem('bunker_auth_cache', content);
-
-                    if (content.trim() === 'INIT' || content === '') {
-                        satelliteState = 'INIT';
-                    } else {
-                        satelliteState = 'LOCKED';
-                    }
-                }
+                let result = await fetchFromSatellites();
+                activeSatellite = result.source;
+                localStorage.setItem('bunker_auth_cache', result.content);
+                satelliteState = (result.content.trim() === 'INIT' || result.content === '') ? 'INIT' : 'LOCKED';
                 updateUI();
             } catch(e) {
-                console.error("> SYS_LOG (CHECK_STATUS):", e);
-                if (e.message && e.message.includes("API_REJECTED")) {
-                    Terminal.toast("SATELLITE REJECTED. CHECK TOKEN/GIST.", 'danger');
+                const cachedContent = localStorage.getItem('bunker_auth_cache');
+                if (cachedContent) {
+                    Terminal.toast("> CLOUDS UNREACHABLE. USING LOCAL CACHE.", 'warning');
+                    activeSatellite = 'LOCAL_CACHE';
+                    satelliteState = (cachedContent.trim() === 'INIT' || cachedContent === '') ? 'INIT' : 'LOCKED';
                 } else {
-                    const cachedContent = localStorage.getItem('bunker_auth_cache');
-                    if (cachedContent) {
-                        Terminal.toast("> SATELLITE UNREACHABLE. USING LOCAL CACHE.", 'warning');
-                        satelliteState = (cachedContent.trim() === 'INIT' || cachedContent === '') ? 'INIT' : 'LOCKED';
-                    } else {
-                        satelliteState = 'LOCKED';
-                    }
+                    activeSatellite = 'UNKNOWN';
+                    satelliteState = 'LOCKED';
                 }
                 updateUI();
             }
         }
 
+        // --- PROTOCOL DUAL-WRITE (SYNC / SAVE) ---
+        async function syncToSatellites(encryptedPayload) {
+            Terminal.splash.show('> ENCRYPTING & SYNCING TO SATELLITES...');
+            localStorage.setItem('bunker_auth_cache', encryptedPayload);
+            const promises = [];
+
+            // Target 1: GitHub Gist (bunker_auth.enc)
+            if (ghToken && gistId) {
+                promises.push(fetch(`https://api.github.com/gists/${gistId}`, {
+                    method: 'PATCH',
+                    headers: { "Accept": "application/vnd.github.v3+json", "Authorization": `token ${ghToken}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ files: { "bunker_auth.enc": { content: encryptedPayload } } })
+                }).then(res => { if(!res.ok) throw new Error(); return 'GH'; }));
+            }
+
+            // Target 2: GitLab Snippet (bunker_auth.enc)
+            if (glToken && snippetId) {
+                promises.push(fetch(`https://gitlab.com/api/v4/snippets/${snippetId}`, {
+                    method: 'PUT',
+                    headers: { "PRIVATE-TOKEN": glToken, "Content-Type": "application/json" },
+                    body: JSON.stringify({ files: [{ action: "update", file_path: "bunker_auth.enc", content: encryptedPayload }] })
+                }).then(res => { if(!res.ok) throw new Error(); return 'GL'; }));
+            }
+
+            if(promises.length === 0) return;
+
+            try {
+                const results = await Promise.allSettled(promises);
+                const success = results.filter(r => r.status === 'fulfilled').length;
+
+                if (success === 0) {
+                    throw new Error("ALL_FAILED");
+                } else if (success < promises.length) {
+                    // Split-Brain Mitigation
+                    Terminal.toast('PARTIAL SYNC. ONE SATELLITE DOWN.', 'warning');
+                    localStorage.setItem('bunker_auth_pending_sync', 'true');
+                } else {
+                    Terminal.toast('DUAL-SATELLITE SYNC SUCCESSFUL', 'normal');
+                    localStorage.removeItem('bunker_auth_pending_sync');
+                }
+            } catch (e) {
+                localStorage.setItem('bunker_auth_pending_sync', 'true');
+                Terminal.toast('SAVED LOCALLY. PENDING SYNC (OFFLINE)', 'warning');
+            }
+            updateSatelliteBadge();
+            Terminal.splash.close(500);
+        }
+
         async function syncPendingData() {
-            // Cek apakah ada data lokal yang belum terkirim ke satelit
             if (localStorage.getItem('bunker_auth_pending_sync') === 'true') {
                 const cachedPayload = localStorage.getItem('bunker_auth_cache');
-                if (cachedPayload && ghToken && gistId) {
-                    Terminal.toast('> DETECTED OFFLINE CHANGES. SYNCING TO SATELLITE...', 'warning');
-                    try {
-                        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                            method: 'PATCH',
-                            headers: { 
-                                "Accept": "application/vnd.github.v3+json",
-                                "Authorization": `token ${ghToken}`, 
-                                "Content-Type": "application/json" 
-                            },
-                            body: JSON.stringify({ files: { "bunker_auth.enc": { content: cachedPayload } } })
-                        });
-                        
-                        if(res.ok) {
-                            // Jika berhasil terkirim, hapus label "PENDING"
-                            localStorage.removeItem('bunker_auth_pending_sync');
-                            Terminal.toast('> SYNC COMPLETE. SATELLITE UPDATED.', 'success');
-                        }
-                    } catch(e) {
-                        // Jika masih gagal (mungkin sinyal putus lagi), biarkan labelnya tetap ada
-                        console.warn("> SYNC FAILED. WILL RETRY LATER.");
-                    }
+                if (cachedPayload && ghToken) {
+                    Terminal.toast('> DETECTED OFFLINE CHANGES. SYNCING...', 'warning');
+                    await syncToSatellites(cachedPayload);
                 }
             }
         }
 
         function saveSetup() {
-            let t = document.getElementById('setup-token').value.replace(/\s+/g, '');
-            let g = document.getElementById('setup-gist').value.replace(/\s+/g, '');
-            if (g.includes('/')) { g = g.split('/').pop(); }
+            let tGH = document.getElementById('setup-gh-token').value.replace(/\s+/g, '');
+            let iGH = cleanUrl(document.getElementById('setup-gh-id').value);
+            let tGL = document.getElementById('setup-gl-token').value.replace(/\s+/g, '');
+            let iGL = cleanUrl(document.getElementById('setup-gl-id').value);
 
-            if(t && g) {
-                Terminal.splash.show('> LINKING TO SATELLITE...');
+            if(tGH && iGH) {
+                Terminal.splash.show('> LINKING TO SATELLITES...');
                 setTimeout(() => {
-                    localStorage.setItem('bunker_gh_token', t);
-                    localStorage.setItem('bunker_gist_id', g);
-                    ghToken = t; gistId = g;
+                    localStorage.setItem('bunker_gh_token', tGH);
+                    localStorage.setItem('bunker_gist_id', iGH);
+                    
+                    if(tGL && iGL) { 
+                        localStorage.setItem('bunker_gl_token', tGL); 
+                        localStorage.setItem('bunker_gl_id', iGL); 
+                    }
+                    
+                    ghToken = tGH; gistId = iGH;
+                    glToken = tGL; snippetId = iGL;
+                    
                     checkSatelliteStatus();
                     Terminal.splash.close(500);
                 }, 800);
+            } else {
+                Terminal.toast('GITHUB CREDENTIALS ARE REQUIRED', 'danger');
             }
         }
 
         function purgeSetup() {
-            if(confirm("> WARNING: Destroy terminal link coordinates?")) {
-                localStorage.removeItem('bunker_gh_token');
-                localStorage.removeItem('bunker_gist_id');
-                ghToken = null; gistId = null;
+            if(confirm("> WARNING: Destroy all terminal link coordinates?")) {
+                localStorage.removeItem('bunker_gh_token'); localStorage.removeItem('bunker_gist_id');
+                localStorage.removeItem('bunker_gl_token'); localStorage.removeItem('bunker_gl_id');
+                ghToken = null; gistId = null; glToken = null; snippetId = null;
                 satelliteState = 'LOCKED';
                 updateUI();
             }
@@ -342,9 +452,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const pwd2 = document.getElementById('init-confirm').value;
             
             if(!pwd1 || !pwd2) return;
-            if(pwd1 !== pwd2) {
-                Terminal.toast('PASSWORDS DO NOT MATCH', 'danger'); return;
-            }
+            if(pwd1 !== pwd2) { Terminal.toast('PASSWORDS DO NOT MATCH', 'danger'); return; }
 
             authData = [];
             activePassword = pwd1;
@@ -353,8 +461,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             document.getElementById('init-password').value = '';
             document.getElementById('init-confirm').value = '';
             
-            Terminal.toast('CORE FORMATTED. UPLOADING EMPTY VAULT...', 'warning');
-            await saveToGitHub();
+            Terminal.toast('CORE FORMATTED. SYNCING CLOUDS...', 'warning');
+            const encrypted = CryptoJS.AES.encrypt("[]", activePassword).toString();
+            await syncToSatellites(encrypted);
             updateUI();
         }
 
@@ -366,43 +475,24 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             let content = '';
             
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
-                    headers: { 
-                        "Accept": "application/vnd.github.v3+json",
-                        "Authorization": `token ${ghToken}` 
-                    }
-                });
-                
-                const data = await res.json();
-                if (data.message) throw new Error("API_REJECTED: " + data.message);
-                if (!data.files || !data.files["bunker_auth.enc"]) {
-                    throw new Error("FILE_MISSING: bunker_auth.enc not found in Gist!");
-                }
-                
-                content = data.files["bunker_auth.enc"].content;
+                let result = await fetchFromSatellites();
+                content = result.content;
+                activeSatellite = result.source;
                 localStorage.setItem('bunker_auth_cache', content);
-                
             } catch(e) {
-                console.error("> SYS_LOG (UNLOCK_CORE):", e);
-                if (e.message && (e.message.includes("API_REJECTED") || e.message.includes("FILE_MISSING"))) {
-                    Terminal.toast(e.message, 'danger');
-                    Terminal.splash.close(500);
-                    return;
-                }
-                
                 content = localStorage.getItem('bunker_auth_cache');
                 if (!content) {
-                    Terminal.toast('SYS_ERR: FETCH FAILED. CHECK CONSOLE (F12).', 'danger');
-                    Terminal.splash.close(500);
-                    return;
+                    Terminal.toast('SYS_ERR: FETCH FAILED. NO CACHE.', 'danger');
+                    activeSatellite = 'UNKNOWN';
+                    Terminal.splash.close(500); return;
                 }
+                activeSatellite = 'LOCAL_CACHE';
                 Terminal.toast('DECRYPTING FROM LOCAL CACHE...', 'warning');
             }
 
             if (content.trim() === 'INIT') {
                 Terminal.toast('SATELLITE SYNC DELAY. RETRY IN 5 SECONDS.', 'warning');
-                Terminal.splash.close(500);
-                return;
+                Terminal.splash.close(500); return;
             }
 
             try {
@@ -433,39 +523,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             Terminal.toast('TOKEN: AUTH SECURED', 'warning');
         }
 
-        async function saveToGitHub() {
-            Terminal.splash.show('> ENCRYPTING & UPLOADING KEYS...');
-            
-            try {
-                const payloadStr = JSON.stringify(authData);
-                const encrypted = CryptoJS.AES.encrypt(payloadStr, activePassword).toString();
-                
-                localStorage.setItem('bunker_auth_cache', encrypted);
-                
-                const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                    method: 'PATCH',
-                    headers: { 
-                        "Accept": "application/vnd.github.v3+json",
-                        "Authorization": `token ${ghToken}`, 
-                        "Content-Type": "application/json" 
-                    },
-                    body: JSON.stringify({ files: { "bunker_auth.enc": { content: encrypted } } })
-                });
-                
-                if(!res.ok) throw new Error("Failed to upload payload.");
-                
-                // JIKA SUKSES ONLINE: Pastikan tidak ada label PENDING yang tersisa
-                localStorage.removeItem('bunker_auth_pending_sync');
-                Terminal.toast('UPLOAD SUCCESSFUL', 'normal');
-                
-            } catch(e) {
-                // JIKA OFFLINE/GAGAL: Pasang label PENDING agar di-sync nanti
-                localStorage.setItem('bunker_auth_pending_sync', 'true');
-                Terminal.toast('SAVED LOCALLY. PENDING SATELLITE UPLOAD (OFFLINE)', 'warning');
-            }
-            Terminal.splash.close(500);
-        }
-
         function toggleAddForm() {
             const f = document.getElementById('add-form');
             f.style.display = f.style.display === 'none' ? 'block' : 'none';
@@ -482,7 +539,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             const newEntry = { id: Date.now(), issuer: issuer, account: account, secret: secret };
             authData.push(newEntry);
             
-            await saveToGitHub();
+            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(authData), activePassword).toString());
             
             document.getElementById('entry-issuer').value = '';
             document.getElementById('entry-account').value = '';
@@ -518,7 +575,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             authData[index].account = account;
             authData[index].secret = secret;
 
-            await saveToGitHub();
+            await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(authData), activePassword).toString());
             Terminal.modal.close('editModal');
             renderAuthCards();
         }
@@ -526,12 +583,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         async function deleteEntry(id) {
             if(confirm("> WARNING: Irrevocably destroy this 2FA Key?")) {
                 authData = authData.filter(i => i.id !== id);
-                await saveToGitHub();
+                await syncToSatellites(CryptoJS.AES.encrypt(JSON.stringify(authData), activePassword).toString());
                 renderAuthCards();
             }
         }
 
         function renderAuthCards() {
+            updateSatelliteBadge(); // Selalu refresh diagnostic badge
+
             const container = document.getElementById('auth-items');
             container.innerHTML = '';
             
