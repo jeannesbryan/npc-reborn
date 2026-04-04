@@ -24,8 +24,8 @@ RewriteEngine On
 
 # [A] PROTEKSI AREA UPLOADS (Karantina File Berbahaya)
 # Jika ada yang mencoba mengakses/mengeksekusi file script (.php, .exe, dll) 
-# di dalam folder uploads manapun (Echo atau Blog), paksa tolak (403 Forbidden)!
-RewriteRule ^(blog|echo)/uploads/.*\.(php|php[0-9]|phtml|cgi|pl|py|jsp|asp|sh|exe)$ - [F,NC,L]
+# di dalam folder uploads Blog, paksa tolak (403 Forbidden)!
+RewriteRule ^blog/uploads/.*\.(php|php[0-9]|phtml|cgi|pl|py|jsp|asp|sh|exe)$ - [F,NC,L]
 
 # [B] ROUTING ARTIKEL BLOG
 # Jika URL mengarah ke /blog/judul-artikel (dan itu bukan nama file/folder asli),

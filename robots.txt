@@ -4,7 +4,6 @@ User-agent: *
 # Area yang diizinkan untuk diindeks dan dicrawl AI
 Allow: /$
 Allow: /blog/
-Allow: /echo/
 Allow: /assets/
 
 # Area Terlarang (Zona Militer)

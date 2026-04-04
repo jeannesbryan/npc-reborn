@@ -50,16 +50,14 @@ function getDirStats($dir) {
 
 $basePath = realpath(__DIR__ . '/..');
 $bunker_db_size = file_exists(__DIR__ . '/bunker_data.sqlite') ? filesize(__DIR__ . '/bunker_data.sqlite') : 0;
-$echo_db_size = file_exists($basePath . '/echo/echo_data.sqlite') ? filesize($basePath . '/echo/echo_data.sqlite') : 0;
 $blog_db_size = file_exists($basePath . '/blog/blog_data.sqlite') ? filesize($basePath . '/blog/blog_data.sqlite') : 0;
 $index_db_size = file_exists($basePath . '/index/index_data.sqlite') ? filesize($basePath . '/index/index_data.sqlite') : 0;
 $grid_db_size = file_exists($basePath . '/grid/grid_data.sqlite') ? filesize($basePath . '/grid/grid_data.sqlite') : 0;
-$total_db_size = $bunker_db_size + $echo_db_size + $blog_db_size + $index_db_size + $grid_db_size;
+$total_db_size = $bunker_db_size + $blog_db_size + $index_db_size + $grid_db_size;
 
-$echo_media = getDirStats($basePath . '/echo/uploads');
 $blog_media = getDirStats($basePath . '/blog/uploads');
-$total_media_size = $echo_media['size'] + $blog_media['size'];
-$total_media_count = $echo_media['count'] + $blog_media['count'];
+$total_media_size = $blog_media['size'];
+$total_media_count = $blog_media['count'];
 
 $db_file = __DIR__ . '/bunker_data.sqlite';
 try {
@@ -122,10 +120,10 @@ try {
             
             <div class="t-card mb-0 d-flex flex-column justify-content-between">
                 <div>
-                    <h3 class="mb-1 text-success">> COMMS: ECHO</h3>
-                    <p class="text-muted fs-small mb-4">Shortwave transmission station.</p>
+                    <h3 class="mb-1 text-success">> LINK: RELAY</h3>
+                    <p class="text-muted fs-small mb-4">Secure external relay node connection.</p>
                 </div>
-                <a href="../echo/index.php" class="t-btn t-btn-block">INITIALIZE</a>
+                <a href="https://relay.npc.my.id" target="_blank" class="t-btn t-btn-block">INITIALIZE</a>
             </div>
 
             <div class="t-card mb-0 d-flex flex-column justify-content-between">
@@ -191,7 +189,6 @@ try {
                     <div class="telemetry-val"><?= formatBytes($total_db_size) ?></div>
                     <div class="fs-small text-muted" style="line-height: 1.6;">
                         <span class="text-success">></span> BUNKER: <?= formatBytes($bunker_db_size) ?><br>
-                        <span class="text-success">></span> ECHO: <?= formatBytes($echo_db_size) ?><br>
                         <span class="text-success">></span> BLOG: <?= formatBytes($blog_db_size) ?><br>
                         <span class="text-success">></span> INDEX: <?= formatBytes($index_db_size) ?><br>
                         <span class="text-success">></span> GRID: <?= formatBytes($grid_db_size) ?><br>
@@ -205,7 +202,6 @@ try {
                     <div class="telemetry-val"><?= formatBytes($total_media_size) ?></div>
                     <div class="fs-small text-muted" style="line-height: 1.6;">
                         ATTACHMENTS: <?= $total_media_count ?> FILES<br>
-                        <span class="text-success">></span> ECHO_DIR: <?= formatBytes($echo_media['size']) ?><br>
                         <span class="text-success">></span> BLOG_DIR: <?= formatBytes($blog_media['size']) ?>
                     </div>
                 </div>

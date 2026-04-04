@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SYS_NODE: Jeannes Bryan</title>
-    
     <meta name="google-site-verification" content="E0ICtVu6Sc2hBMPr2c9_EwGO2XuTGfVESUSqde2Y8" />
     <meta name="msvalidate.01" content="69F30B6CF7C799C59DE89EB81E6EE067" />
     <meta name="yandex-verification" content="56be8ebae84bd731" />
@@ -13,7 +12,6 @@
     <link rel="canonical" href="https://npc.my.id/" />
     <meta name="keywords" content="Jeannes Bryan, Tech Enthusiast, NPC, Personal Website, Portfolio" />
     <meta name="author" content="Jeannes Bryan" />
-    
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://npc.my.id/" />
     <meta property="og:title" content="SYS_NODE: Jeannes Bryan" />
@@ -23,14 +21,11 @@
     <meta name="twitter:title" content="SYS_NODE: Jeannes Bryan" />
     <meta name="twitter:description" content="Entity Tracker. Status: Monitoring the void." />
     <meta name="twitter:image" content="https://npc.my.id/assets/jeannesbryan.webp" />
-    
     <link rel="icon" type="image/svg+xml" href="assets/npc-icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="assets/terminal.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">
     <style>
         .profile-card { border-top: 4px solid var(--t-green); padding: 40px 20px; text-align: center; }
         .avatar-main { width: 120px; height: 120px; border-radius: 0; border: 2px solid var(--t-green-dim); object-fit: cover; display: block; margin: 0 auto 15px auto; }
@@ -63,10 +58,6 @@
                     <div class="text-muted fs-small mb-3">AVAILABLE CHANNELS:</div>
                     
                     <div class="t-action-grid">
-                        <a href="echo/index.php" class="t-btn t-btn-block app-link" title="Echo" data-text="> INTERCEPTING_ORBITAL_SIGNAL_TELEMETRY">
-                            [ RECV: ECHO_BROADCAST ]
-                        </a>
-                        
                         <a href="blog/" class="t-btn t-btn-block app-link" title="Manifesto" data-text="> DECRYPTING_PUBLIC_MANIFESTO_ARCHIVES">
                             [ READ: MANIFESTO_LOGS ]
                         </a>
@@ -89,8 +80,8 @@
         </div>
     </div>
 
-    <script src="assets/terminal.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f2a0ef225b3440df9eebc56d0a75c318"}'></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const splash = document.getElementById('splash-overlay');
