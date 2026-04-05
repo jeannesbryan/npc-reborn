@@ -19,11 +19,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../assets/terminal.css">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" integrity="sha512-a+SUDuwNzXDvz4XrIcXHuCf089/iJAoN4lmrXJg18XnduKK6YlDHNRalv4yd1N40OKI80tFidF+rqTFKGPoWFQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         .pane { display: none; }
         .pane.active { display: block; animation: fadeIn 0.3s ease; }
@@ -332,8 +329,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         </div>
     </div>
 
-    <script src="../assets/terminal.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
     <script>
         // MULTI-CLOUD CREDENTIALS (ISOLATED NAMESPACE FOR VAULT)
         let ghToken = localStorage.getItem('vault_gh_token');
@@ -366,22 +362,35 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         // ================= KRIPTOGRAFI MILITER (PBKDF2) =================
         function encryptPayload(dataStr, pwd) {
             const salt = CryptoJS.lib.WordArray.random(128/8);
-            const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000 });
+            // MESIN BARU: SHA-256 (Versi 3)
+            const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000, hasher: CryptoJS.algo.SHA256 });
             const iv = CryptoJS.lib.WordArray.random(128/8);
             const encrypted = CryptoJS.AES.encrypt(dataStr, key, { iv: iv });
-            return 'v2|' + salt.toString() + '|' + iv.toString() + '|' + encrypted.ciphertext.toString();
+            // TANDAI SEBAGAI v3
+            return 'v3|' + salt.toString() + '|' + iv.toString() + '|' + encrypted.ciphertext.toString();
         }
 
         function decryptPayload(cipherText, pwd) {
-            if (cipherText.startsWith('v2|')) {
+            if (cipherText.startsWith('v3|')) {
+                // DEKRIPSI PAYLOAD BARU (SHA-256)
                 const parts = cipherText.split('|');
                 const salt = CryptoJS.enc.Hex.parse(parts[1]);
                 const iv = CryptoJS.enc.Hex.parse(parts[2]);
                 const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext: CryptoJS.enc.Hex.parse(parts[3]) });
-                const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000 });
+                const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000, hasher: CryptoJS.algo.SHA256 });
+                const decrypted = CryptoJS.AES.decrypt(cipherParams, key, { iv: iv });
+                return decrypted.toString(CryptoJS.enc.Utf8);
+            } else if (cipherText.startsWith('v2|')) {
+                // DEKRIPSI PAYLOAD LAMA (SHA-1)
+                const parts = cipherText.split('|');
+                const salt = CryptoJS.enc.Hex.parse(parts[1]);
+                const iv = CryptoJS.enc.Hex.parse(parts[2]);
+                const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext: CryptoJS.enc.Hex.parse(parts[3]) });
+                const key = CryptoJS.PBKDF2(pwd, salt, { keySize: 256/32, iterations: 10000, hasher: CryptoJS.algo.SHA1 });
                 const decrypted = CryptoJS.AES.decrypt(cipherParams, key, { iv: iv });
                 return decrypted.toString(CryptoJS.enc.Utf8);
             } else {
+                // DEKRIPSI PAYLOAD SANGAT LAMA (TANPA PBKDF2)
                 const bytes = CryptoJS.AES.decrypt(cipherText, pwd);
                 return bytes.toString(CryptoJS.enc.Utf8);
             }
@@ -741,9 +750,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 vaultData = JSON.parse(decryptedStr);
                 
                 let isMigrated = false;
-                if (!content.startsWith('v2|')) {
+                // JIKA DATA BUKAN v3 (SHA-256), MAKA AUTO MIGRASI
+                if (!content.startsWith('v3|')) {
                     isMigrated = true;
-                    Terminal.toast('> LEGACY DATA DETECTED. AUTO-UPGRADING TO PBKDF2...', 'warning');
+                    Terminal.toast('> LEGACY DATA DETECTED. AUTO-UPGRADING TO SHA-256...', 'warning');
                 }
 
                 vaultData = vaultData.map(item => {
@@ -757,6 +767,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 updateUI();
                 Terminal.toast('ACCESS GRANTED', 'normal');
                 
+                // JIKA TERDETEKSI MIGRASI, LANGSUNG ENKRIPSI ULANG & SYNC KE SATELIT
                 if(isMigrated) {
                     syncToSatellites(encryptPayload(JSON.stringify(vaultData), activePassword));
                 }

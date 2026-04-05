@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYS_NODE: Supply Depot (Store)</title>
+    <meta name="description" content="Entity Tracker Supply Depot. Status: Inventory Online." />
+    <meta name="theme-color" content="#030303">
+    <link rel="icon" type="image/svg+xml" href="assets/npc-icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">
+    <style>
+        /* CSS Khusus Layout Store */
+        .store-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .store-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 kolom di layar besar */
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .store-item-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 2px dashed var(--t-green-dim);
+            margin-bottom: 15px;
+            background-color: #000;
+        }
+
+        .store-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Responsif untuk layar mobile (Berubah jadi 1 kolom vertikal) */
+        @media (max-width: 768px) {
+            .store-grid {
+                grid-template-columns: 1fr; /* 1 kolom di layar kecil */
+            }
+        }
+    </style>
+</head>
+<body class="t-crt"> 
+    <div id="splash-overlay" class="t-splash">
+        <div class="font-bold text-success" id="splash-text" style="font-size: 1.1rem; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; text-align: center;">
+            > DECRYPTING_INVENTORY_DATA<span class="t-loading-dots"></span>
+        </div>
+    </div>
+
+    <div class="store-container">
+        <div class="d-flex justify-content-between align-items-center mb-4" style="border-bottom: 1px dashed var(--t-green-dim); padding-bottom: 15px;">
+            <div>
+                <h2 class="mb-0 text-success"><span class="t-led-dot t-led-green"></span> SUPPLY_DEPOT</h2>
+                <div class="text-muted fs-small mt-1">> STATUS: INVENTORY ONLINE</div>
+            </div>
+            <a href="index.php" class="t-btn" title="Return to Root Node">[ ➜ ] BACK TO ROOT</a>
+        </div>
+
+        <div class="store-grid">
+            
+            <div class="t-card store-card mb-0">
+                <div>
+                    <img src="assets/store/jomokerto.webp" alt="Item 1" class="store-item-img t-retro-filter">
+                    <h3 class="mb-1 text-success">> JOMOKERTO.WEB.ID</h3>
+                    <p class="text-muted fs-small mb-3" style="line-height: 1.5;">This domain is for sale. Secure a powerful online identity for your brand today. Reach out via email for pricing and details.</p>
+                </div>
+                <div>
+                    <div class="font-bold mb-3" style="font-size: 1.2rem;">PRICE: IDR 200.000</div>
+                    <a href="mailto:jeannesbryan@duck.com?subject=Order Inquiry: JOMOKERTO.WEB.ID" class="t-btn t-btn-block text-center">
+                        [ CONTACT ME TO BUY ]
+                    </a>
+                </div>
+            </div>
+
+            <div class="t-card store-card mb-0">
+                <div>
+                    <img src="assets/store/emptyhub.webp" alt="Item 2" class="store-item-img t-retro-filter">
+                    <h3 class="mb-1 text-success">> EMPTYHUB.MY.ID</h3>
+                    <p class="text-muted fs-small mb-3" style="line-height: 1.5;">This domain is for sale. Secure a powerful online identity for your brand today. Reach out via email for pricing and details.</p>
+                </div>
+                <div>
+                    <div class="font-bold mb-3" style="font-size: 1.2rem;">PRICE: IDR 100.000</div>
+                    <a href="mailto:jeannesbryan@duck.com?subject=Order Inquiry: EMPTYHUB.MY.ID" class="t-btn t-btn-block text-center">
+                        [ CONTACT ME TO BUY ]
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f2a0ef225b3440df9eebc56d0a75c318"}'></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Tutup splash screen setelah halaman dimuat
+            const splash = document.getElementById('splash-overlay');
+            if (splash) {
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                }, 800); // Durasi loading palsu (800ms)
+            }
+        });
+    </script>
+</body>
+</html>

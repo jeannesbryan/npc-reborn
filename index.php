@@ -66,6 +66,10 @@
                             [ GOTO: RELAY_NODE ]
                         </a>
 
+                        <a href="store.html" class="t-btn t-btn-block app-link" title="Store" data-text="> ACCESSING_SUPPLY_DEPOT">
+                            [ ACCESS: SUPPLY_DEPOT ]
+                        </a>
+
                         <a href="mailto:jeannesbryan@duck.com" class="t-btn t-btn-block" title="Email">
                             [ SEND: DIRECT_COMMS ]
                         </a>
