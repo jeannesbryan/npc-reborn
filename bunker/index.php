@@ -1,8 +1,8 @@
 <?php
-session_start();
-date_default_timezone_set('Asia/Jakarta');
+require_once 'core.php';
 
-if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) { header("Location: dashboard.php"); exit; }
+// Jika sudah login, langsung bypass ke dashboard
+redirect_if_logged_in();
 
 $db_file = __DIR__ . '/bunker_data.sqlite';
 $error_msg = '';
@@ -40,9 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user && password_verify($password, $user['password_hash'])) {
             $_SESSION['logged_in'] = true; $_SESSION['user_id'] = $user['id'];
-            log_access($pdo, $ip, $ua, 'SUCCESS'); header("Location: dashboard.php"); exit;
+            log_access($pdo, $ip, $ua, 'SUCCESS'); 
+            header("Location: dashboard.php"); 
+            exit;
         } else {
-            log_access($pdo, $ip, $ua, 'FAILED'); $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
+            log_access($pdo, $ip, $ua, 'FAILED'); 
+            $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
         }
     }
 }

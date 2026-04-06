@@ -1,11 +1,9 @@
 <?php
-session_start();
-date_default_timezone_set('Asia/Jakarta');
+// Memanggil sistem keamanan terpusat dari Bunker Core
+require_once realpath(__DIR__ . '/../bunker/core.php');
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: ../index.php");
-    exit;
-}
+// Wajibkan login agar penyusup tidak bisa membuka halaman ini
+require_login();
 ?>
 <!doctype html>
 <html lang="en">

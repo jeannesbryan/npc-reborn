@@ -1,15 +1,6 @@
 <?php
-session_start();
-date_default_timezone_set('Asia/Jakarta');
-
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: ../index.php");
-    exit;
-}
-
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
+require_once realpath(__DIR__ . '/../bunker/core.php');
+require_login();
 
 $db_file = __DIR__ . '/grid_data.sqlite';
 

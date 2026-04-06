@@ -1,16 +1,20 @@
 <?php
-session_start();
-date_default_timezone_set('Asia/Jakarta');
+require_once 'core.php';
+require_login();
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) { header("Location: index.php"); exit; }
-if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
-
+// Logika Logout
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'logout') {
-    $_SESSION = array(); session_destroy(); header("Location: index.php"); exit;
+    $_SESSION = array(); 
+    session_destroy(); 
+    header("Location: index.php"); 
+    exit;
 }
 
+// Logika Backup (EVAC)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'backup') {
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) { die("> SYS_ERR: Integrity validation failed."); }
+    // Validasi token CSRF (mencegah attacker memaksa server melakukan backup dari luar)
+    verify_csrf($_POST['csrf_token'] ?? '');
+
     $rootPath = realpath(__DIR__ . '/..');
     $zipName = 'bunker_backup_' . date('Y-m-d_H-i-s') . '.zip';
     $zipPath = sys_get_temp_dir() . '/' . $zipName;
@@ -26,9 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         }
         $zip->close();
-        header('Content-Type: application/zip'); header('Content-disposition: attachment; filename='.$zipName);
-        header('Content-Length: ' . filesize($zipPath)); readfile($zipPath); unlink($zipPath); exit;
-    } else { $backup_error = "> SYS_ERR: Failed to compress vessel data."; }
+        header('Content-Type: application/zip'); 
+        header('Content-disposition: attachment; filename='.$zipName);
+        header('Content-Length: ' . filesize($zipPath)); 
+        readfile($zipPath); 
+        unlink($zipPath); 
+        exit;
+    } else { 
+        $backup_error = "> SYS_ERR: Failed to compress vessel data."; 
+    }
 }
 
 function formatBytes($bytes, $precision = 2) {
