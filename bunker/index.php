@@ -25,27 +25,55 @@ function log_access($pdo, $ip, $ua, $status) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $ip = get_ip(); $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
-    $time_limit = date('Y-m-d H:i:s', strtotime('-15 minutes'));
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= ?");
-    $stmt->execute([$ip, $time_limit]);
-    $failed_attempts = $stmt->fetchColumn();
+    // 1. VERIFIKASI CLOUDFLARE TURNSTILE
+    $turnstile_secret = "0x4AAAAAAC1TWqrszAPAcxjxPLzv3DNZjQU";
+    $turnstile_response = $_POST['cf-turnstile-response'] ?? '';
 
-    if ($failed_attempts >= 5) {
-        $error_msg = "PROTOCOL LOCKDOWN: Too many anomalies. Signal temporarily blocked.";
+    if (empty($turnstile_response)) {
+        $error_msg = "SYS_ERR: Missing anti-bot validation.";
     } else {
-        $email = $_POST['operator_id'] ?? ''; $password = $_POST['cipher'] ?? '';
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?"); $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Tembak API Cloudflare untuk verifikasi
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://challenges.cloudflare.com/turnstile/v0/siteverify");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'secret' => $turnstile_secret,
+            'response' => $turnstile_response,
+            'remoteip' => get_ip()
+        ]));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $cf_verify = curl_exec($ch);
+        curl_close($ch);
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            $_SESSION['logged_in'] = true; $_SESSION['user_id'] = $user['id'];
-            log_access($pdo, $ip, $ua, 'SUCCESS'); 
-            header("Location: dashboard.php"); 
-            exit;
+        $cf_outcome = json_decode($cf_verify);
+
+        if (!$cf_outcome || !$cf_outcome->success) {
+            $error_msg = "SYS_ERR: Anti-bot challenge failed.";
         } else {
-            log_access($pdo, $ip, $ua, 'FAILED'); 
-            $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
+            // 2. JIKA LOLOS TURNSTILE, LANJUTKAN PROSES LOGIN BAWAANMU
+            $ip = get_ip(); $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN_ENTITY';
+            $time_limit = date('Y-m-d H:i:s', strtotime('-15 minutes'));
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND status = 'FAILED' AND created_at >= ?");
+            $stmt->execute([$ip, $time_limit]);
+            $failed_attempts = $stmt->fetchColumn();
+
+            if ($failed_attempts >= 5) {
+                $error_msg = "PROTOCOL LOCKDOWN: Too many anomalies. Signal temporarily blocked.";
+            } else {
+                $email = $_POST['operator_id'] ?? ''; $password = $_POST['cipher'] ?? '';
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?"); $stmt->execute([$email]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user && password_verify($password, $user['password_hash'])) {
+                    $_SESSION['logged_in'] = true; $_SESSION['user_id'] = $user['id'];
+                    log_access($pdo, $ip, $ua, 'SUCCESS'); 
+                    header("Location: dashboard.php"); 
+                    exit;
+                } else {
+                    log_access($pdo, $ip, $ua, 'FAILED'); 
+                    $error_msg = "SYS_ERR: Authentication failed. Unrecognized signal.";
+                }
+            }
         }
     }
 }
@@ -63,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <link rel="manifest" href="manifest.json">
     <style>
         .login-card {
@@ -120,6 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="password" id="cipherInput" name="cipher" class="t-input" required autocomplete="off">
                         <button type="button" class="t-input-action-btn" onclick="Terminal.toggleInputAction('cipherInput', this)">[ SHOW ]</button>
                     </div>
+
+                    <div class="cf-turnstile mb-3" data-sitekey="0x4AAAAAAC1TWn2hGeXno7_k" data-theme="dark"></div>
 
                     <button type="submit" class="t-btn t-btn-block mt-3">[ INITIATE UPLINK ]</button>
                 </form>
