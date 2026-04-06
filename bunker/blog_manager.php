@@ -102,9 +102,7 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../assets/terminal.css">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">
     <style>
         .snippet-box { 
             background: rgba(0, 255, 65, 0.05); 
@@ -266,7 +264,7 @@ $articles = $pdo->query("SELECT id, title, slug, status, created_at, views FROM 
             </div>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
     <script>
         const btnUpload = document.getElementById('btn-upload');
         const mediaInput = document.getElementById('media-input');

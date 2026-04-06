@@ -111,9 +111,7 @@ foreach ($all_bookmarks as $bm) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../assets/terminal.css">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">    
     <style>
         /* Styling mikro untuk link agar lebih retro */
         .bookmark-link::before { content: '[>] '; opacity: 0.5; color: var(--t-green-dim); }
@@ -257,7 +255,7 @@ foreach ($all_bookmarks as $bm) {
         </div>
     </div>
 
-    <script src="../assets/terminal.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof Terminal !== 'undefined' && Terminal.splash) {

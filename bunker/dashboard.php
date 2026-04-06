@@ -78,9 +78,7 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../assets/terminal.css">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">
     <style>
         /* CSS Khusus Layout Dashboard */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
@@ -255,8 +253,7 @@ try {
         
     </div>
 
-    <script src="../assets/terminal.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             // Tutup splash screen awal saat halaman dashboard pertama kali dimuat

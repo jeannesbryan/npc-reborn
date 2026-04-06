@@ -59,10 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../assets/terminal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.css">
     <link rel="manifest" href="manifest.json">
-
     <style>
         .login-card {
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
@@ -140,8 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button id="btn-install-pwa" class="t-btn t-btn-sm">[ INSTALL ]</button>
     </div>
 
-    <script src="../assets/terminal.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/gh/jeannesbryan/terminal/terminal.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof Terminal !== 'undefined' && Terminal.splash) {
